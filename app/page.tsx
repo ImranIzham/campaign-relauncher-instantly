@@ -475,15 +475,15 @@ export default function Home() {
 
   if (!authenticated) {
     return (
-      <div className="min-h-screen bg-zinc-950 flex items-center justify-center p-4">
+      <div className="min-h-screen bg-[#181819] flex items-center justify-center p-4">
         <form
           onSubmit={handleAuth}
-          className="bg-zinc-900 border border-zinc-800 rounded-2xl p-8 w-full max-w-sm"
+          className="bg-[#1C1E21] border border-[#262626] rounded-2xl p-8 w-full max-w-sm"
         >
           <div className="text-center mb-6">
-            <h1 className="text-xl font-semibold text-white">Understory</h1>
-            <p className="text-zinc-500 text-sm mt-1">
-              Campaign Relauncher — Instantly
+            <h1 className="text-xl font-bold text-[#02E481] font-[var(--font-display)]">Understory</h1>
+            <p className="text-[#808080] text-sm mt-1">
+              Instantly Relauncher
             </p>
           </div>
           <input
@@ -493,7 +493,7 @@ export default function Home() {
             placeholder="Enter PIN"
             value={pin}
             onChange={(e) => setPin(e.target.value)}
-            className="w-full bg-zinc-800 border border-zinc-700 rounded-lg px-4 py-3 text-white text-center text-lg tracking-widest placeholder:text-zinc-600 focus:outline-none focus:border-zinc-500"
+            className="w-full bg-[#0A0A0A] border border-[#262626] rounded-lg px-4 py-3 text-white text-center text-lg tracking-widest placeholder:text-[#808080] focus:outline-none focus:border-[#02E481]"
           />
           {authError && (
             <p className="text-red-400 text-sm text-center mt-3">
@@ -503,7 +503,7 @@ export default function Home() {
           <button
             type="submit"
             disabled={pin.length < 4 || authLoading}
-            className="w-full mt-4 bg-white text-black font-medium rounded-lg py-3 hover:bg-zinc-200 transition disabled:opacity-30 disabled:cursor-not-allowed"
+            className="w-full mt-4 bg-[#02E481] text-[#071018] font-semibold rounded-lg py-3 hover:bg-[#00c96e] transition disabled:opacity-30 disabled:cursor-not-allowed"
           >
             {authLoading ? "Verifying..." : "Enter"}
           </button>
@@ -537,13 +537,13 @@ export default function Home() {
 
   // --- Main Wizard UI ---
   return (
-    <div className="min-h-screen bg-zinc-950 flex items-center justify-center p-4">
-      <div className="bg-zinc-900 border border-zinc-800 rounded-2xl p-8 w-full max-w-5xl">
+    <div className="min-h-screen bg-[#181819] flex items-center justify-center p-4">
+      <div className="bg-[#1C1E21] border border-[#262626] rounded-2xl p-8 w-full max-w-5xl">
         {/* Header */}
         <div className="text-center mb-6">
-          <h1 className="text-xl font-semibold text-white">Understory</h1>
-          <p className="text-zinc-500 text-sm mt-1">
-            Campaign Relauncher — Instantly
+          <h1 className="text-xl font-bold text-[#02E481] font-[var(--font-display)]">Understory</h1>
+          <p className="text-[#808080] text-sm mt-1">
+            Instantly Relauncher
           </p>
         </div>
 
@@ -555,10 +555,10 @@ export default function Home() {
                 <div
                   className={`flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-medium transition ${
                     i === currentStepIndex
-                      ? "bg-white text-black"
+                      ? "bg-[#02E481] text-[#071018]"
                       : i < currentStepIndex
-                        ? "bg-zinc-700 text-zinc-300"
-                        : "bg-zinc-800 text-zinc-600"
+                        ? "bg-[#262626] text-[#B3B3B3]"
+                        : "bg-[#0A0A0A] text-[#808080]"
                   }`}
                 >
                   <span>{i + 1}</span>
@@ -566,7 +566,7 @@ export default function Home() {
                 </div>
                 {i < stepLabels.length - 1 && (
                   <div
-                    className={`w-6 h-px ${i < currentStepIndex ? "bg-zinc-500" : "bg-zinc-800"}`}
+                    className={`w-6 h-px ${i < currentStepIndex ? "bg-[#808080]" : "bg-[#111111]"}`}
                   />
                 )}
               </div>
@@ -578,7 +578,7 @@ export default function Home() {
         {wizardStep === "select-client" && (
           <div className="space-y-4">
             <div>
-              <label className="text-zinc-400 text-sm block mb-2">
+              <label className="text-[#B3B3B3] text-sm block mb-2">
                 Select Client
               </label>
               {clients.length > 0 ? (
@@ -589,7 +589,7 @@ export default function Home() {
                     setShowAddClient(false);
                     setClientError("");
                   }}
-                  className="w-full bg-zinc-800 border border-zinc-700 rounded-lg px-4 py-3 text-white focus:outline-none focus:border-zinc-500"
+                  className="w-full bg-[#0A0A0A] border border-[#262626] rounded-lg px-4 py-3 text-white focus:outline-none focus:border-[#02E481]"
                 >
                   <option value="">Choose a client...</option>
                   {clients.map((c) => (
@@ -599,23 +599,23 @@ export default function Home() {
                   ))}
                 </select>
               ) : (
-                <p className="text-zinc-500 text-sm">
+                <p className="text-[#808080] text-sm">
                   No clients saved yet. Add one below.
                 </p>
               )}
             </div>
 
-            <div className="border-t border-zinc-800 pt-4">
+            <div className="border-t border-[#262626] pt-4">
               {!showAddClient ? (
                 <button
                   onClick={() => setShowAddClient(true)}
-                  className="text-sm text-zinc-400 hover:text-white transition"
+                  className="text-sm text-[#B3B3B3] hover:text-[#02E481] transition"
                 >
                   + Add New Client
                 </button>
               ) : (
-                <div className="space-y-3 bg-zinc-800/30 border border-zinc-700/50 rounded-xl p-4">
-                  <p className="text-zinc-500 text-xs uppercase tracking-wider font-medium">
+                <div className="space-y-3 bg-[#0A0A0A]/30 border border-[#262626]/50 rounded-xl p-4">
+                  <p className="text-[#808080] text-xs uppercase tracking-wider font-medium">
                     New Client
                   </p>
                   <input
@@ -623,14 +623,14 @@ export default function Home() {
                     placeholder="Client name"
                     value={newClientName}
                     onChange={(e) => setNewClientName(e.target.value)}
-                    className="w-full bg-zinc-800 border border-zinc-700 rounded-lg px-4 py-2.5 text-white text-sm placeholder:text-zinc-600 focus:outline-none focus:border-zinc-500"
+                    className="w-full bg-[#0A0A0A] border border-[#262626] rounded-lg px-4 py-2.5 text-white text-sm placeholder:text-[#808080] focus:outline-none focus:border-[#02E481]"
                   />
                   <input
                     type="password"
                     placeholder="Instantly API key"
                     value={newClientApiKey}
                     onChange={(e) => setNewClientApiKey(e.target.value)}
-                    className="w-full bg-zinc-800 border border-zinc-700 rounded-lg px-4 py-2.5 text-white text-sm placeholder:text-zinc-600 focus:outline-none focus:border-zinc-500 font-mono"
+                    className="w-full bg-[#0A0A0A] border border-[#262626] rounded-lg px-4 py-2.5 text-white text-sm placeholder:text-[#808080] focus:outline-none focus:border-[#02E481] font-mono"
                   />
                   {clientError && (
                     <p className="text-red-400 text-sm">{clientError}</p>
@@ -641,7 +641,7 @@ export default function Home() {
                         setShowAddClient(false);
                         setClientError("");
                       }}
-                      className="px-4 py-2 bg-zinc-800 border border-zinc-700 text-zinc-300 text-sm rounded-lg hover:bg-zinc-700 transition"
+                      className="px-4 py-2 bg-[#0A0A0A] border border-[#262626] text-[#B3B3B3] text-sm rounded-lg hover:bg-[#262626] transition"
                     >
                       Cancel
                     </button>
@@ -652,7 +652,7 @@ export default function Home() {
                         !newClientApiKey.trim() ||
                         clientLoading
                       }
-                      className="flex-1 bg-white text-black text-sm font-medium rounded-lg py-2 hover:bg-zinc-200 transition disabled:opacity-30 disabled:cursor-not-allowed"
+                      className="flex-1 bg-[#02E481] text-[#071018] text-sm font-semibold rounded-lg py-2 hover:bg-[#00c96e] transition disabled:opacity-30 disabled:cursor-not-allowed"
                     >
                       {clientLoading ? "Validating key..." : "Save Client"}
                     </button>
@@ -664,7 +664,7 @@ export default function Home() {
             <button
               onClick={() => setWizardStep("configure")}
               disabled={!selectedClientId}
-              className="w-full bg-white text-black font-medium rounded-lg py-3 hover:bg-zinc-200 transition disabled:opacity-30 disabled:cursor-not-allowed"
+              className="w-full bg-[#02E481] text-[#071018] font-semibold rounded-lg py-3 hover:bg-[#00c96e] transition disabled:opacity-30 disabled:cursor-not-allowed"
             >
               Continue with {selectedClientName || "client"}
             </button>
@@ -675,8 +675,8 @@ export default function Home() {
         {wizardStep === "configure" && (
           <div className="space-y-4">
             {/* Client badge */}
-            <div className="flex items-center justify-between bg-zinc-800/50 border border-zinc-700/50 rounded-lg px-4 py-2">
-              <span className="text-zinc-300 text-sm">
+            <div className="flex items-center justify-between bg-[#0A0A0A]/50 border border-[#262626]/50 rounded-lg px-4 py-2">
+              <span className="text-[#B3B3B3] text-sm">
                 Client:{" "}
                 <span className="text-white font-medium">
                   {selectedClientName}
@@ -684,14 +684,14 @@ export default function Home() {
               </span>
               <button
                 onClick={() => setWizardStep("select-client")}
-                className="text-zinc-500 text-xs hover:text-white transition"
+                className="text-[#808080] text-xs hover:text-[#02E481] transition"
               >
                 Change
               </button>
             </div>
 
             <div>
-              <label className="text-zinc-400 text-sm block mb-2">
+              <label className="text-[#B3B3B3] text-sm block mb-2">
                 Campaign ID
               </label>
               <input
@@ -699,12 +699,12 @@ export default function Home() {
                 placeholder="e.g. abc123-def456-..."
                 value={campaignId}
                 onChange={(e) => setCampaignId(e.target.value)}
-                className="w-full bg-zinc-800 border border-zinc-700 rounded-lg px-4 py-3 text-white placeholder:text-zinc-600 focus:outline-none focus:border-zinc-500 font-mono text-sm"
+                className="w-full bg-[#111111] border border-[#262626] rounded-lg px-4 py-3 text-white placeholder:text-[#808080] focus:outline-none focus:border-[#02E481] font-mono text-sm"
               />
             </div>
 
-            <div className="space-y-3 border border-zinc-800 rounded-xl p-4">
-              <p className="text-zinc-500 text-xs uppercase tracking-wider font-medium">
+            <div className="space-y-3 border border-[#262626] rounded-xl p-4">
+              <p className="text-[#808080] text-xs uppercase tracking-wider font-medium">
                 Options
               </p>
 
@@ -713,18 +713,18 @@ export default function Home() {
                   type="checkbox"
                   checked={includeReplied}
                   onChange={(e) => setIncludeReplied(e.target.checked)}
-                  className="mt-0.5 w-4 h-4 rounded border-zinc-600 bg-zinc-800 text-white accent-white"
+                  className="mt-0.5 w-4 h-4 rounded border-[#262626] bg-[#111111] text-white accent-white"
                 />
-                <span className="text-zinc-300 text-sm">
+                <span className="text-[#B3B3B3] text-sm">
                   Include leads who replied
-                  <span className="text-zinc-500 block text-xs">
+                  <span className="text-[#808080] block text-xs">
                     For lead magnet campaigns
                   </span>
                 </span>
               </label>
 
               <div className="space-y-2">
-                <label className="text-zinc-400 text-sm block">
+                <label className="text-[#B3B3B3] text-sm block">
                   Last contacted
                 </label>
                 <select
@@ -732,7 +732,7 @@ export default function Home() {
                   onChange={(e) =>
                     setLastContactedOption(Number(e.target.value))
                   }
-                  className="w-full bg-zinc-800 border border-zinc-700 rounded-lg px-3 py-2 text-white text-sm focus:outline-none focus:border-zinc-500"
+                  className="w-full bg-[#111111] border border-[#262626] rounded-lg px-3 py-2 text-white text-sm focus:outline-none focus:border-[#02E481]"
                 >
                   {LAST_CONTACTED_OPTIONS.map((opt) => (
                     <option key={opt.value} value={opt.value}>
@@ -747,9 +747,9 @@ export default function Home() {
                       placeholder="Days"
                       value={customDays}
                       onChange={(e) => setCustomDays(e.target.value)}
-                      className="w-24 bg-zinc-800 border border-zinc-700 rounded-lg px-3 py-2 text-white text-sm placeholder:text-zinc-600 focus:outline-none focus:border-zinc-500"
+                      className="w-24 bg-[#111111] border border-[#262626] rounded-lg px-3 py-2 text-white text-sm placeholder:text-[#808080] focus:outline-none focus:border-[#02E481]"
                     />
-                    <span className="text-zinc-400 text-sm">+ days ago</span>
+                    <span className="text-[#B3B3B3] text-sm">+ days ago</span>
                   </div>
                 )}
               </div>
@@ -759,11 +759,11 @@ export default function Home() {
                   type="checkbox"
                   checked={validateEmails}
                   onChange={(e) => setValidateEmails(e.target.checked)}
-                  className="mt-0.5 w-4 h-4 rounded border-zinc-600 bg-zinc-800 text-white accent-white"
+                  className="mt-0.5 w-4 h-4 rounded border-[#262626] bg-[#111111] text-white accent-white"
                 />
-                <span className="text-zinc-300 text-sm">
+                <span className="text-[#B3B3B3] text-sm">
                   Validate emails before relaunching
-                  <span className="text-zinc-500 block text-xs">
+                  <span className="text-[#808080] block text-xs">
                     Checks each email via Instantly API — removes invalid
                     addresses
                   </span>
@@ -774,7 +774,7 @@ export default function Home() {
             <button
               onClick={handlePreview}
               disabled={!campaignId}
-              className="w-full bg-white text-black font-medium rounded-lg py-3 hover:bg-zinc-200 transition disabled:opacity-30 disabled:cursor-not-allowed"
+              className="w-full bg-[#02E481] text-[#071018] font-semibold rounded-lg py-3 hover:bg-[#00c96e] transition disabled:opacity-30 disabled:cursor-not-allowed"
             >
               Preview Campaign
             </button>
@@ -784,8 +784,8 @@ export default function Home() {
         {/* ========== PREVIEWING (loading) ========== */}
         {wizardStep === "previewing" && (
           <div className="text-center py-12">
-            <div className="inline-block w-6 h-6 border-2 border-zinc-600 border-t-white rounded-full animate-spin" />
-            <p className="text-zinc-400 text-sm mt-4">
+            <div className="inline-block w-6 h-6 border-2 border-[#262626] border-t-[#02E481] rounded-full animate-spin" />
+            <p className="text-[#B3B3B3] text-sm mt-4">
               Fetching campaign from Instantly...
             </p>
           </div>
@@ -797,24 +797,24 @@ export default function Home() {
           wizardStep === "validated") &&
           preview && (
             <div className="space-y-4">
-              <div className="bg-zinc-800/50 border border-zinc-700/50 rounded-xl p-5 space-y-4">
+              <div className="bg-[#0A0A0A]/50 border border-[#262626]/50 rounded-xl p-5 space-y-4">
                 <div>
                   <p className="text-white font-medium">
                     {preview.campaign.name}
                   </p>
-                  <p className="text-zinc-500 text-sm">
+                  <p className="text-[#808080] text-sm">
                     ID: {preview.campaign.id} &middot;{" "}
                     <span
                       className={
                         preview.campaign.status === "active"
                           ? "text-green-400"
-                          : "text-zinc-400"
+                          : "text-[#B3B3B3]"
                       }
                     >
                       {preview.campaign.status}
                     </span>
                     {" "}&middot;{" "}
-                    <span className="text-zinc-400">{selectedClientName}</span>
+                    <span className="text-[#B3B3B3]">{selectedClientName}</span>
                   </p>
                 </div>
 
@@ -833,7 +833,7 @@ export default function Home() {
                 </div>
 
                 {preview.dateFilteredCount > 0 && (
-                  <p className="text-zinc-500 text-xs">
+                  <p className="text-[#808080] text-xs">
                     {preview.dateFilteredCount} leads excluded (contacted
                     within {minDaysSinceContact} days)
                   </p>
@@ -841,11 +841,11 @@ export default function Home() {
 
                 {preview.variablesUsed &&
                   preview.variablesUsed.length > 0 && (
-                    <div className="border-t border-zinc-700/50 pt-3 space-y-2">
-                      <p className="text-zinc-500 text-xs uppercase tracking-wider font-medium">
+                    <div className="border-t border-[#262626]/50 pt-3 space-y-2">
+                      <p className="text-[#808080] text-xs uppercase tracking-wider font-medium">
                         Variable Check
                       </p>
-                      <p className="text-zinc-300 text-sm">
+                      <p className="text-[#B3B3B3] text-sm">
                         Variables:{" "}
                         {preview.variablesUsed
                           .map((v) => `{{${v}}}`)
@@ -865,7 +865,7 @@ export default function Home() {
                                 ).map(([varName, count]) => (
                                   <li
                                     key={varName}
-                                    className="text-zinc-400 text-xs"
+                                    className="text-[#B3B3B3] text-xs"
                                   >
                                     {varName}: missing for {count} leads
                                   </li>
@@ -881,11 +881,11 @@ export default function Home() {
               {wizardStep === "validating" && (
                 <div className="space-y-2">
                   <div className="flex justify-between text-sm">
-                    <span className="text-zinc-400">
+                    <span className="text-[#B3B3B3]">
                       Validating... {validationProgress.done} /{" "}
                       {validationProgress.total}
                     </span>
-                    <span className="text-zinc-500">
+                    <span className="text-[#808080]">
                       {validationProgress.total > 0
                         ? Math.round(
                             (validationProgress.done /
@@ -896,7 +896,7 @@ export default function Home() {
                       %
                     </span>
                   </div>
-                  <div className="w-full bg-zinc-800 rounded-full h-2">
+                  <div className="w-full bg-[#111111] rounded-full h-2">
                     <div
                       className="bg-white h-2 rounded-full transition-all duration-300"
                       style={{
@@ -914,8 +914,8 @@ export default function Home() {
               )}
 
               {wizardStep === "validated" && validationSummary && (
-                <div className="bg-zinc-800/50 border border-zinc-700/50 rounded-xl p-4 space-y-3">
-                  <p className="text-zinc-500 text-xs uppercase tracking-wider font-medium">
+                <div className="bg-[#0A0A0A]/50 border border-[#262626]/50 rounded-xl p-4 space-y-3">
+                  <p className="text-[#808080] text-xs uppercase tracking-wider font-medium">
                     Validation Results
                   </p>
                   <div className="flex flex-wrap gap-3 text-sm">
@@ -932,7 +932,7 @@ export default function Home() {
                       Catch-all: {validationSummary.catchAll}
                     </span>
                     {validationSummary.unknown > 0 && (
-                      <span className="text-zinc-400">
+                      <span className="text-[#B3B3B3]">
                         Unknown: {validationSummary.unknown}
                       </span>
                     )}
@@ -950,9 +950,9 @@ export default function Home() {
                           type="checkbox"
                           checked={includeRisky}
                           onChange={(e) => setIncludeRisky(e.target.checked)}
-                          className="w-4 h-4 rounded border-zinc-600 bg-zinc-800 accent-white"
+                          className="w-4 h-4 rounded border-[#262626] bg-[#111111] accent-white"
                         />
-                        <span className="text-zinc-300 text-sm">
+                        <span className="text-[#B3B3B3] text-sm">
                           Include risky emails ({validationSummary.risky})
                         </span>
                       </label>
@@ -965,9 +965,9 @@ export default function Home() {
                           onChange={(e) =>
                             setIncludeCatchAll(e.target.checked)
                           }
-                          className="w-4 h-4 rounded border-zinc-600 bg-zinc-800 accent-white"
+                          className="w-4 h-4 rounded border-[#262626] bg-[#111111] accent-white"
                         />
-                        <span className="text-zinc-300 text-sm">
+                        <span className="text-[#B3B3B3] text-sm">
                           Include catch-all emails (
                           {validationSummary.catchAll})
                         </span>
@@ -978,23 +978,23 @@ export default function Home() {
               )}
 
               {/* Leads Table */}
-              <div className="border border-zinc-800 rounded-xl overflow-hidden">
+              <div className="border border-[#262626] rounded-xl overflow-hidden">
                 <button
                   onClick={() => setLeadsTableExpanded(!leadsTableExpanded)}
-                  className="w-full flex items-center justify-between px-4 py-3 bg-zinc-800/30 hover:bg-zinc-800/50 transition"
+                  className="w-full flex items-center justify-between px-4 py-3 bg-[#111111]/30 hover:bg-[#111111]/50 transition"
                 >
-                  <span className="text-zinc-300 text-sm">
+                  <span className="text-[#B3B3B3] text-sm">
                     {leadsTableExpanded ? "Hide" : "View"} {leads.length}{" "}
                     leads
                   </span>
-                  <span className="text-zinc-500 text-xs">
+                  <span className="text-[#808080] text-xs">
                     {leadsTableExpanded ? "▲" : "▼"}
                   </span>
                 </button>
 
                 {leadsTableExpanded && (
                   <div>
-                    <div className="flex gap-2 px-4 py-2 border-t border-zinc-800">
+                    <div className="flex gap-2 px-4 py-2 border-t border-[#262626]">
                       {(
                         [
                           { key: "all" as const, label: "All" },
@@ -1021,8 +1021,8 @@ export default function Home() {
                           onClick={() => setTableFilter(chip.key)}
                           className={`px-2.5 py-1 rounded-md text-xs font-medium transition ${
                             tableFilter === chip.key
-                              ? "bg-zinc-600 text-white"
-                              : "bg-zinc-800 text-zinc-400 hover:bg-zinc-700"
+                              ? "bg-[#02E481] text-white"
+                              : "bg-[#111111] text-[#B3B3B3] hover:bg-[#262626]"
                           }`}
                         >
                           {chip.label}
@@ -1053,8 +1053,8 @@ export default function Home() {
 
                         return (
                           <table className="w-full text-sm">
-                            <thead className="sticky top-0 bg-zinc-900">
-                              <tr className="text-zinc-500 text-xs uppercase tracking-wider">
+                            <thead className="sticky top-0 bg-[#1C1E21]">
+                              <tr className="text-[#808080] text-xs uppercase tracking-wider">
                                 <th className="text-left px-4 py-2 font-medium">
                                   Name
                                 </th>
@@ -1083,7 +1083,7 @@ export default function Home() {
                                 )}
                               </tr>
                             </thead>
-                            <tbody className="divide-y divide-zinc-800/50">
+                            <tbody className="divide-y divide-[#262626]/50">
                               {filteredLeads.map((lead) => (
                                 <tr
                                   key={lead.id}
@@ -1093,15 +1093,15 @@ export default function Home() {
                                       : ""
                                   }
                                 >
-                                  <td className="px-4 py-2 text-zinc-300 whitespace-nowrap">
+                                  <td className="px-4 py-2 text-[#B3B3B3] whitespace-nowrap">
                                     {lead.firstName} {lead.lastName}
                                   </td>
-                                  <td className="px-4 py-2 text-zinc-400 whitespace-nowrap max-w-[200px] truncate">
+                                  <td className="px-4 py-2 text-[#B3B3B3] whitespace-nowrap max-w-[200px] truncate">
                                     {lead.email}
                                   </td>
-                                  <td className="px-4 py-2 text-zinc-400 whitespace-nowrap">
+                                  <td className="px-4 py-2 text-[#B3B3B3] whitespace-nowrap">
                                     {lead.company || (
-                                      <span className="text-zinc-600">
+                                      <span className="text-[#808080]">
                                         &mdash;
                                       </span>
                                     )}
@@ -1114,7 +1114,7 @@ export default function Home() {
                                         className="px-4 py-2 whitespace-nowrap max-w-[160px] truncate"
                                       >
                                         {val != null && val !== "" ? (
-                                          <span className="text-zinc-300 text-xs">
+                                          <span className="text-[#B3B3B3] text-xs">
                                             {String(val)}
                                           </span>
                                         ) : (
@@ -1154,7 +1154,7 @@ export default function Home() {
                         );
                       })()}
                       {filteredLeads.length === 0 && (
-                        <p className="text-zinc-600 text-sm text-center py-6">
+                        <p className="text-[#808080] text-sm text-center py-6">
                           No leads match this filter
                         </p>
                       )}
@@ -1168,14 +1168,14 @@ export default function Home() {
                 <div className="flex gap-3">
                   <button
                     onClick={() => setWizardStep("configure")}
-                    className="px-4 py-3 bg-zinc-800 border border-zinc-700 text-zinc-300 font-medium rounded-lg hover:bg-zinc-700 transition text-sm"
+                    className="px-4 py-3 bg-[#0A0A0A] border border-[#262626] text-[#B3B3B3] font-medium rounded-lg hover:bg-[#262626] transition text-sm"
                   >
                     Back
                   </button>
                   {validateEmails ? (
                     <button
                       onClick={handleStreamValidation}
-                      className="flex-1 bg-white text-black font-medium rounded-lg py-3 hover:bg-zinc-200 transition"
+                      className="flex-1 bg-[#02E481] text-[#071018] font-semibold rounded-lg py-3 hover:bg-[#00c96e] transition"
                     >
                       Proceed to Validation
                     </button>
@@ -1186,7 +1186,7 @@ export default function Home() {
                   ) : (
                     <button
                       onClick={handleRelaunch}
-                      className="flex-1 bg-white text-black font-medium rounded-lg py-3 hover:bg-zinc-200 transition"
+                      className="flex-1 bg-[#02E481] text-[#071018] font-semibold rounded-lg py-3 hover:bg-[#00c96e] transition"
                     >
                       Re-launch {relaunchCount.toLocaleString()} Leads
                     </button>
@@ -1198,7 +1198,7 @@ export default function Home() {
                 <div className="flex gap-3">
                   <button
                     onClick={() => setWizardStep("preview")}
-                    className="px-4 py-3 bg-zinc-800 border border-zinc-700 text-zinc-300 font-medium rounded-lg hover:bg-zinc-700 transition text-sm"
+                    className="px-4 py-3 bg-[#0A0A0A] border border-[#262626] text-[#B3B3B3] font-medium rounded-lg hover:bg-[#262626] transition text-sm"
                   >
                     Back
                   </button>
@@ -1209,7 +1209,7 @@ export default function Home() {
                   ) : (
                     <button
                       onClick={handleRelaunch}
-                      className="flex-1 bg-white text-black font-medium rounded-lg py-3 hover:bg-zinc-200 transition"
+                      className="flex-1 bg-[#02E481] text-[#071018] font-semibold rounded-lg py-3 hover:bg-[#00c96e] transition"
                     >
                       Re-launch {relaunchCount.toLocaleString()} Leads
                     </button>
@@ -1222,15 +1222,15 @@ export default function Home() {
         {/* ========== RELAUNCHING ========== */}
         {wizardStep === "relaunching" && (
           <div className="text-center py-12">
-            <div className="inline-block w-6 h-6 border-2 border-zinc-600 border-t-white rounded-full animate-spin" />
-            <p className="text-zinc-400 text-sm mt-4">{relaunchStepLabel}</p>
+            <div className="inline-block w-6 h-6 border-2 border-[#262626] border-t-[#02E481] rounded-full animate-spin" />
+            <p className="text-[#B3B3B3] text-sm mt-4">{relaunchStepLabel}</p>
           </div>
         )}
 
         {/* ========== DONE ========== */}
         {wizardStep === "done" && result && (
           <div className="space-y-4">
-            <div className="bg-zinc-800/50 border border-zinc-700/50 rounded-xl p-5 space-y-4">
+            <div className="bg-[#0A0A0A]/50 border border-[#262626]/50 rounded-xl p-5 space-y-4">
               <div className="flex items-center gap-2">
                 <span className="text-green-400 text-lg">&#10003;</span>
                 <p className="text-white font-medium">{result.message}</p>
@@ -1283,7 +1283,7 @@ export default function Home() {
 
             <button
               onClick={reset}
-              className="w-full bg-zinc-800 border border-zinc-700 text-white font-medium rounded-lg py-3 hover:bg-zinc-700 transition"
+              className="w-full bg-[#0A0A0A] border border-[#262626] text-white font-medium rounded-lg py-3 hover:bg-[#262626] transition"
             >
               Start Over
             </button>
@@ -1298,7 +1298,7 @@ export default function Home() {
             </div>
             <button
               onClick={reset}
-              className="w-full bg-zinc-800 border border-zinc-700 text-white font-medium rounded-lg py-3 hover:bg-zinc-700 transition"
+              className="w-full bg-[#0A0A0A] border border-[#262626] text-white font-medium rounded-lg py-3 hover:bg-[#262626] transition"
             >
               Start Over
             </button>
@@ -1324,8 +1324,8 @@ function StatusBadge({
 }) {
   if (!status || status === "pending") {
     return (
-      <span className="inline-flex items-center gap-1.5 text-xs text-zinc-500">
-        <span className="w-2 h-2 rounded-full bg-zinc-600 animate-pulse" />
+      <span className="inline-flex items-center gap-1.5 text-xs text-[#808080]">
+        <span className="w-2 h-2 rounded-full bg-[#02E481] animate-pulse" />
         Pending
       </span>
     );
@@ -1345,8 +1345,8 @@ function StatusBadge({
       label: "Catch-all",
     },
     unknown: {
-      color: "bg-zinc-500",
-      text: "text-zinc-400",
+      color: "bg-[#808080]",
+      text: "text-[#B3B3B3]",
       label: "Unknown",
     },
   }[status];
@@ -1375,7 +1375,7 @@ function Stat({
       <p className={`text-2xl font-semibold ${color}`}>
         {value.toLocaleString()}
       </p>
-      <p className="text-zinc-500 text-xs mt-1">{label}</p>
+      <p className="text-[#808080] text-xs mt-1">{label}</p>
     </div>
   );
 }
@@ -1393,7 +1393,7 @@ function Row({
 }) {
   return (
     <div className="flex justify-between">
-      <span className="text-zinc-400">{label}</span>
+      <span className="text-[#B3B3B3]">{label}</span>
       <span
         className={
           error
