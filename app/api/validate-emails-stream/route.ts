@@ -1,5 +1,5 @@
 import { NextRequest } from "next/server";
-import { getClientApiKey } from "@/lib/supabase";
+import { getClientApiKey } from "@/lib/sheets";
 import {
   getCampaignLeads,
   getCampaignReplies,

@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from "next/server";
-import { listClients, addClient } from "@/lib/supabase";
+import { listClients, addClient } from "@/lib/sheets";
 
 function checkPin(request: NextRequest): boolean {
   const pin = request.headers.get("x-pin")?.trim();
