@@ -80,6 +80,13 @@ const RELAUNCH_STEP_LABELS: Record<string, string> = {
 
 type TableFilter = "all" | "missing-vars" | "invalid" | "risky";
 
+function parseCampaignId(input: string): string {
+  const trimmed = input.trim();
+  const match = trimmed.match(/instantly\.ai\/app\/campaign\/([a-f0-9-]+)/i);
+  if (match) return match[1];
+  return trimmed;
+}
+
 // --- Main Component ---
 
 export default function Home() {
@@ -129,6 +136,9 @@ export default function Home() {
     lastContactedOption === -1
       ? Number(customDays) || 0
       : lastContactedOption;
+
+  const resolvedCampaignId = useMemo(() => parseCampaignId(campaignId), [campaignId]);
+  const isUrlInput = campaignId.trim() !== resolvedCampaignId;
 
   // --- Fetch clients on auth ---
   useEffect(() => {
@@ -269,7 +279,7 @@ export default function Home() {
 
     try {
       const params = new URLSearchParams({
-        id: campaignId,
+        id: resolvedCampaignId,
         clientId: selectedClientId,
       });
       if (includeReplied) params.set("includeReplied", "true");
@@ -294,7 +304,7 @@ export default function Home() {
       setError(err instanceof Error ? err.message : "Preview failed");
       setWizardStep("error");
     }
-  }, [campaignId, selectedClientId, includeReplied, minDaysSinceContact, pin]);
+  }, [resolvedCampaignId, selectedClientId, includeReplied, minDaysSinceContact, pin]);
 
   const handleStreamValidation = useCallback(async () => {
     if (!preview) return;
@@ -314,7 +324,7 @@ export default function Home() {
           "x-pin": pin,
         },
         body: JSON.stringify({
-          campaignId,
+          campaignId: resolvedCampaignId,
           clientId: selectedClientId,
           includeReplied,
           minDaysSinceContact,
@@ -387,7 +397,7 @@ export default function Home() {
     preview,
     leads.length,
     pin,
-    campaignId,
+    resolvedCampaignId,
     selectedClientId,
     includeReplied,
     minDaysSinceContact,
@@ -422,7 +432,7 @@ export default function Home() {
           "x-pin": pin,
         },
         body: JSON.stringify({
-          campaignId,
+          campaignId: resolvedCampaignId,
           clientId: selectedClientId,
           includeReplied,
           minDaysSinceContact,
@@ -444,7 +454,7 @@ export default function Home() {
     }
   }, [
     pin,
-    campaignId,
+    resolvedCampaignId,
     selectedClientId,
     includeReplied,
     minDaysSinceContact,
@@ -692,15 +702,20 @@ export default function Home() {
 
             <div>
               <label className="text-[#B3B3B3] text-sm block mb-2">
-                Campaign ID
+                Campaign ID or URL
               </label>
               <input
                 type="text"
-                placeholder="e.g. abc123-def456-..."
+                placeholder="Paste Instantly campaign URL or ID"
                 value={campaignId}
                 onChange={(e) => setCampaignId(e.target.value)}
                 className="w-full bg-[#111111] border border-[#262626] rounded-lg px-4 py-3 text-white placeholder:text-[#808080] focus:outline-none focus:border-[#02E481] font-mono text-sm"
               />
+              {isUrlInput && resolvedCampaignId && (
+                <p className="text-[#808080] text-xs mt-1.5">
+                  Campaign ID: <span className="text-[#B3B3B3] font-mono">{resolvedCampaignId}</span>
+                </p>
+              )}
             </div>
 
             <div className="space-y-3 border border-[#262626] rounded-xl p-4">
@@ -773,7 +788,7 @@ export default function Home() {
 
             <button
               onClick={handlePreview}
-              disabled={!campaignId}
+              disabled={!resolvedCampaignId}
               className="w-full bg-[#02E481] text-[#071018] font-semibold rounded-lg py-3 hover:bg-[#00c96e] transition disabled:opacity-30 disabled:cursor-not-allowed"
             >
               Preview Campaign
