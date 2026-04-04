@@ -117,6 +117,12 @@ export interface Subsequence {
 
 // --- Exported functions ---
 
+export async function listCampaigns(
+  apiKey: string
+): Promise<Campaign[]> {
+  return fetchAllPaginated<Campaign>(apiKey, "/campaigns");
+}
+
 export async function getCampaign(
   apiKey: string,
   id: string

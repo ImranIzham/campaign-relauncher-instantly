@@ -10,6 +10,12 @@ interface ClientOption {
   created_at: string;
 }
 
+interface CampaignOption {
+  id: string;
+  name: string;
+  status: string;
+}
+
 interface LeadRow {
   id: string;
   email: string;
@@ -59,6 +65,7 @@ type WizardStep =
   | "preview"
   | "validating"
   | "validated"
+  | "confirm"
   | "relaunching"
   | "done"
   | "error";
@@ -90,9 +97,15 @@ function parseCampaignId(input: string): string {
 // --- Main Component ---
 
 export default function Home() {
-  // Auth
-  const [pin, setPin] = useState("");
-  const [authenticated, setAuthenticated] = useState(false);
+  // Auth — restore from sessionStorage
+  const [pin, setPin] = useState(() => {
+    if (typeof window !== "undefined") return sessionStorage.getItem("relauncher_pin") ?? "";
+    return "";
+  });
+  const [authenticated, setAuthenticated] = useState(() => {
+    if (typeof window !== "undefined") return sessionStorage.getItem("relauncher_auth") === "1";
+    return false;
+  });
 
   // Client selection
   const [clients, setClients] = useState<ClientOption[]>([]);
@@ -102,6 +115,11 @@ export default function Home() {
   const [newClientApiKey, setNewClientApiKey] = useState("");
   const [clientLoading, setClientLoading] = useState(false);
   const [clientError, setClientError] = useState("");
+
+  // Campaign selection
+  const [campaigns, setCampaigns] = useState<CampaignOption[]>([]);
+  const [campaignsLoading, setCampaignsLoading] = useState(false);
+  const [campaignSearch, setCampaignSearch] = useState("");
 
   // Wizard
   const [wizardStep, setWizardStep] = useState<WizardStep>("select-client");
@@ -161,7 +179,31 @@ export default function Home() {
     }
   };
 
+  const fetchCampaigns = async (clientId: string) => {
+    setCampaigns([]);
+    setCampaignsLoading(true);
+    try {
+      const res = await fetch(`/api/campaigns?clientId=${clientId}`, {
+        headers: { "x-pin": pin },
+      });
+      if (res.ok) {
+        const data = await res.json();
+        setCampaigns(data.campaigns ?? []);
+      }
+    } catch {
+      // Silently fail — user can still paste an ID
+    } finally {
+      setCampaignsLoading(false);
+    }
+  };
+
   // --- Computed values ---
+
+  const filteredCampaigns = useMemo(() => {
+    if (!campaignSearch.trim()) return campaigns;
+    const q = campaignSearch.toLowerCase();
+    return campaigns.filter((c) => c.name.toLowerCase().includes(q));
+  }, [campaigns, campaignSearch]);
 
   const validationSummary = useMemo(() => {
     const statuses = leads.map((l) => l.emailStatus).filter(Boolean);
@@ -231,6 +273,8 @@ export default function Home() {
         setAuthError("Incorrect PIN");
         return;
       }
+      sessionStorage.setItem("relauncher_pin", pin.trim());
+      sessionStorage.setItem("relauncher_auth", "1");
       setAuthenticated(true);
     } catch {
       setAuthError("Connection failed");
@@ -463,6 +507,7 @@ export default function Home() {
 
   const reset = () => {
     setCampaignId("");
+    setCampaignSearch("");
     setPreview(null);
     setLeads([]);
     setResult(null);
@@ -480,6 +525,8 @@ export default function Home() {
 
   const selectedClientName =
     clients.find((c) => c.id === selectedClientId)?.name ?? "";
+  const selectedCampaignName =
+    campaigns.find((c) => c.id === resolvedCampaignId)?.name ?? preview?.campaign.name ?? "";
 
   // --- PIN Gate ---
 
@@ -528,8 +575,10 @@ export default function Home() {
     "Configure",
     "Preview",
     ...(validateEmails ? ["Validate"] : []),
+    "Confirm",
     "Relaunch",
   ];
+  const baseConfirmIdx = validateEmails ? 4 : 3;
   const currentStepIndex =
     wizardStep === "select-client"
       ? 0
@@ -539,10 +588,10 @@ export default function Home() {
           ? 2
           : wizardStep === "validating" || wizardStep === "validated"
             ? 3
-            : wizardStep === "relaunching" || wizardStep === "done"
-              ? validateEmails
-                ? 4
-                : 3
+            : wizardStep === "confirm"
+              ? baseConfirmIdx
+              : wizardStep === "relaunching" || wizardStep === "done"
+                ? baseConfirmIdx + 1
               : 0;
 
   // --- Main Wizard UI ---
@@ -672,7 +721,10 @@ export default function Home() {
             </div>
 
             <button
-              onClick={() => setWizardStep("configure")}
+              onClick={() => {
+                fetchCampaigns(selectedClientId);
+                setWizardStep("configure");
+              }}
               disabled={!selectedClientId}
               className="w-full bg-[#02E481] text-[#071018] font-semibold rounded-lg py-3 hover:bg-[#00c96e] transition disabled:opacity-30 disabled:cursor-not-allowed"
             >
@@ -702,18 +754,64 @@ export default function Home() {
 
             <div>
               <label className="text-[#B3B3B3] text-sm block mb-2">
-                Campaign ID or URL
+                Campaign
               </label>
-              <input
-                type="text"
-                placeholder="Paste Instantly campaign URL or ID"
-                value={campaignId}
-                onChange={(e) => setCampaignId(e.target.value)}
-                className="w-full bg-[#111111] border border-[#262626] rounded-lg px-4 py-3 text-white placeholder:text-[#808080] focus:outline-none focus:border-[#02E481] font-mono text-sm"
-              />
-              {isUrlInput && resolvedCampaignId && (
+
+              {campaignsLoading ? (
+                <div className="flex items-center gap-2 py-3 px-4 bg-[#111111] border border-[#262626] rounded-lg">
+                  <div className="w-4 h-4 border-2 border-[#262626] border-t-[#02E481] rounded-full animate-spin" />
+                  <span className="text-[#808080] text-sm">Loading campaigns...</span>
+                </div>
+              ) : campaigns.length > 0 ? (
+                <div className="space-y-2">
+                  <input
+                    type="text"
+                    placeholder="Search campaigns..."
+                    value={campaignSearch}
+                    onChange={(e) => setCampaignSearch(e.target.value)}
+                    className="w-full bg-[#111111] border border-[#262626] rounded-lg px-4 py-2.5 text-white text-sm placeholder:text-[#808080] focus:outline-none focus:border-[#02E481]"
+                  />
+                  <div className="max-h-[240px] overflow-y-auto border border-[#262626] rounded-lg divide-y divide-[#262626]/50">
+                    {filteredCampaigns.map((c) => (
+                      <button
+                        key={c.id}
+                        onClick={() => {
+                          setCampaignId(c.id);
+                          setCampaignSearch("");
+                        }}
+                        className={`w-full text-left px-4 py-2.5 text-sm transition hover:bg-[#262626]/50 ${
+                          resolvedCampaignId === c.id
+                            ? "bg-[#02E481]/10 border-l-2 border-l-[#02E481]"
+                            : ""
+                        }`}
+                      >
+                        <span className="text-white">{c.name}</span>
+                        <span className={`ml-2 text-xs ${
+                          c.status === "active" ? "text-green-400" : "text-[#808080]"
+                        }`}>
+                          {c.status}
+                        </span>
+                      </button>
+                    ))}
+                    {filteredCampaigns.length === 0 && (
+                      <p className="text-[#808080] text-sm text-center py-3">No campaigns match</p>
+                    )}
+                  </div>
+                </div>
+              ) : (
+                <input
+                  type="text"
+                  placeholder="Paste Instantly campaign URL or ID"
+                  value={campaignId}
+                  onChange={(e) => setCampaignId(e.target.value)}
+                  className="w-full bg-[#111111] border border-[#262626] rounded-lg px-4 py-3 text-white placeholder:text-[#808080] focus:outline-none focus:border-[#02E481] font-mono text-sm"
+                />
+              )}
+
+              {resolvedCampaignId && (
                 <p className="text-[#808080] text-xs mt-1.5">
-                  Campaign ID: <span className="text-[#B3B3B3] font-mono">{resolvedCampaignId}</span>
+                  {isUrlInput ? "Campaign ID: " : "Selected: "}
+                  <span className="text-[#B3B3B3] font-mono">{resolvedCampaignId}</span>
                 </p>
               )}
             </div>
@@ -1200,7 +1298,7 @@ export default function Home() {
                     </p>
                   ) : (
                     <button
-                      onClick={handleRelaunch}
+                      onClick={() => setWizardStep("confirm")}
                       className="flex-1 bg-[#02E481] text-[#071018] font-semibold rounded-lg py-3 hover:bg-[#00c96e] transition"
                     >
                       Re-launch {relaunchCount.toLocaleString()} Leads
@@ -1223,7 +1321,7 @@ export default function Home() {
                     </p>
                   ) : (
                     <button
-                      onClick={handleRelaunch}
+                      onClick={() => setWizardStep("confirm")}
                       className="flex-1 bg-[#02E481] text-[#071018] font-semibold rounded-lg py-3 hover:bg-[#00c96e] transition"
                     >
                       Re-launch {relaunchCount.toLocaleString()} Leads
@@ -1233,6 +1331,57 @@ export default function Home() {
               )}
             </div>
           )}
+
+        {/* ========== CONFIRM ========== */}
+        {wizardStep === "confirm" && preview && (
+          <div className="space-y-4">
+            <div className="bg-[#0A0A0A]/50 border border-amber-500/30 rounded-xl p-5 space-y-4">
+              <p className="text-amber-400 text-sm font-medium uppercase tracking-wider">
+                Confirm Relaunch
+              </p>
+              <p className="text-white">
+                This will duplicate{" "}
+                <span className="font-semibold">{selectedCampaignName || preview.campaign.name}</span>{" "}
+                and add <span className="font-semibold text-amber-400">{relaunchCount.toLocaleString()}</span> leads
+                to the new campaign.
+              </p>
+              <div className="space-y-1.5 text-sm">
+                <div className="flex justify-between">
+                  <span className="text-[#808080]">Client</span>
+                  <span className="text-[#B3B3B3]">{selectedClientName}</span>
+                </div>
+                <div className="flex justify-between">
+                  <span className="text-[#808080]">Original campaign</span>
+                  <span className="text-[#B3B3B3]">{preview.campaign.name}</span>
+                </div>
+                <div className="flex justify-between">
+                  <span className="text-[#808080]">Leads to relaunch</span>
+                  <span className="text-amber-400 font-medium">{relaunchCount.toLocaleString()}</span>
+                </div>
+                {excludeLeadEmails.length > 0 && (
+                  <div className="flex justify-between">
+                    <span className="text-[#808080]">Excluded (invalid/risky)</span>
+                    <span className="text-red-400">{excludeLeadEmails.length}</span>
+                  </div>
+                )}
+              </div>
+            </div>
+            <div className="flex gap-3">
+              <button
+                onClick={() => setWizardStep(validateEmails ? "validated" : "preview")}
+                className="px-4 py-3 bg-[#0A0A0A] border border-[#262626] text-[#B3B3B3] font-medium rounded-lg hover:bg-[#262626] transition text-sm"
+              >
+                Back
+              </button>
+              <button
+                onClick={handleRelaunch}
+                className="flex-1 bg-[#02E481] text-[#071018] font-semibold rounded-lg py-3 hover:bg-[#00c96e] transition"
+              >
+                Confirm &amp; Relaunch
+              </button>
+            </div>
+          </div>
+        )}
 
         {/* ========== RELAUNCHING ========== */}
         {wizardStep === "relaunching" && (
