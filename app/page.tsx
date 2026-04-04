@@ -538,8 +538,8 @@ export default function Home() {
           className="bg-[#1C1E21] border border-[#262626] rounded-2xl p-8 w-full max-w-sm"
         >
           <div className="text-center mb-6">
-            <h1 className="text-xl font-bold text-[#02E481] font-[var(--font-display)]">Understory</h1>
-            <p className="text-[#808080] text-sm mt-1">
+            <img src="/logo.png" alt="Understory" className="h-8 mx-auto" />
+            <p className="text-[#808080] text-sm mt-2">
               Instantly Relauncher
             </p>
           </div>

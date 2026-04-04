@@ -22,6 +22,9 @@ const geistMono = Geist_Mono({
 export const metadata: Metadata = {
   title: "Instantly Relauncher — Understory",
   description: "Relaunch email campaigns to non-repliers with one click",
+  icons: {
+    icon: "/favicon.png",
+  },
 };
 
 export default function RootLayout({
