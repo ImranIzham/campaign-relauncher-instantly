@@ -1,4 +1,7 @@
+import { cacheGet, cacheSet } from "./cache";
+
 const BASE_URL = "https://api.instantly.ai/api/v2";
+const TTL = 5 * 60 * 1000; // 5 minutes
 
 async function instantlyFetch(
   apiKey: string,
@@ -142,10 +145,15 @@ export async function getCampaignLeads(
   // /leads/list ignores campaign_id and returns all workspace leads.
   // Instead: get leads that actually received emails in this campaign,
   // then look up their full data from the workspace lead list.
-  const sentEmails = await fetchAllPaginated<Email>(
-    apiKey,
-    `/emails?campaign_id=${campaignId}&email_type=sent`
-  );
+  const sentKey = `sent:${campaignId}:${apiKey.slice(-8)}`;
+  let sentEmails = cacheGet<Email[]>(sentKey);
+  if (!sentEmails) {
+    sentEmails = await fetchAllPaginated<Email>(
+      apiKey,
+      `/emails?campaign_id=${campaignId}&email_type=sent`
+    );
+    cacheSet(sentKey, sentEmails, TTL);
+  }
 
   const campaignLeadEmails = new Set(
     sentEmails.map((e) => e.lead_email).filter((e): e is string => !!e)
@@ -153,8 +161,13 @@ export async function getCampaignLeads(
 
   if (campaignLeadEmails.size === 0) return [];
 
-  // Fetch workspace leads and filter to only this campaign's leads
-  const allLeads = await fetchAllPaginated<Lead>(apiKey, "/leads/list", "POST", {});
+  const leadsKey = `workspace-leads:${apiKey.slice(-8)}`;
+  let allLeads = cacheGet<Lead[]>(leadsKey);
+  if (!allLeads) {
+    allLeads = await fetchAllPaginated<Lead>(apiKey, "/leads/list", "POST", {});
+    cacheSet(leadsKey, allLeads, TTL);
+  }
+
   return allLeads.filter((l) => campaignLeadEmails.has(l.email));
 }
 
@@ -162,10 +175,15 @@ export async function getCampaignReplies(
   apiKey: string,
   campaignId: string
 ): Promise<Email[]> {
-  return fetchAllPaginated<Email>(
+  const key = `replies:${campaignId}:${apiKey.slice(-8)}`;
+  const cached = cacheGet<Email[]>(key);
+  if (cached) return cached;
+  const emails = await fetchAllPaginated<Email>(
     apiKey,
     `/emails?campaign_id=${campaignId}&email_type=received`
   );
+  cacheSet(key, emails, TTL);
+  return emails;
 }
 
 export async function getCampaignSequence(
@@ -197,10 +215,15 @@ export async function getSentEmails(
   apiKey: string,
   campaignId: string
 ): Promise<Email[]> {
-  return fetchAllPaginated<Email>(
+  const key = `sent:${campaignId}:${apiKey.slice(-8)}`;
+  const cached = cacheGet<Email[]>(key);
+  if (cached) return cached;
+  const emails = await fetchAllPaginated<Email>(
     apiKey,
     `/emails?campaign_id=${campaignId}&email_type=sent`
   );
+  cacheSet(key, emails, TTL);
+  return emails;
 }
 
 /**

@@ -27,6 +27,7 @@ export async function POST(request: NextRequest) {
     includeReplied?: boolean;
     minDaysSinceContact?: number;
     excludeMissingVars?: boolean;
+    leadEmails?: string[];
   };
   try {
     body = await request.json();
@@ -46,56 +47,67 @@ export async function POST(request: NextRequest) {
 
   // Fetch and filter leads before starting the stream
   let emailsToValidate: { leadEmail: string; email: string }[];
-  try {
-    const apiKey = await getClientApiKey(body.clientId);
 
-    const [leads, replies] = await Promise.all([
-      getCampaignLeads(apiKey, body.campaignId),
-      getCampaignReplies(apiKey, body.campaignId),
-    ]);
+  if (body.leadEmails && body.leadEmails.length > 0) {
+    // Fast path: frontend already computed the filtered list — zero Instantly API calls
+    emailsToValidate = body.leadEmails.map((email) => ({ leadEmail: email, email }));
+  } else if (Array.isArray(body.leadEmails) && body.leadEmails.length === 0) {
+    return new Response("data: [DONE]\n\n", {
+      headers: { "Content-Type": "text/event-stream" },
+    });
+  } else {
+    // Fallback: re-derive from Instantly (should not be hit in normal flow)
+    try {
+      const apiKey = await getClientApiKey(body.clientId);
 
-    const repliedEmails = new Set(replies.map((r) => r.lead_email));
+      const [leads, replies] = await Promise.all([
+        getCampaignLeads(apiKey, body.campaignId),
+        getCampaignReplies(apiKey, body.campaignId),
+      ]);
 
-    let filteredLeads = body.includeReplied
-      ? leads
-      : leads.filter((l) => !repliedEmails.has(l.email));
+      const repliedEmails = new Set(replies.map((r) => r.lead_email));
 
-    // Date filter
-    if (body.minDaysSinceContact && body.minDaysSinceContact > 0) {
-      const cutoffDate = new Date();
-      cutoffDate.setDate(cutoffDate.getDate() - body.minDaysSinceContact);
+      let filteredLeads = body.includeReplied
+        ? leads
+        : leads.filter((l) => !repliedEmails.has(l.email));
 
-      const sentEmails = await getSentEmails(apiKey, body.campaignId);
-      const lastSentMap = buildLastSentMap(sentEmails);
+      // Date filter
+      if (body.minDaysSinceContact && body.minDaysSinceContact > 0) {
+        const cutoffDate = new Date();
+        cutoffDate.setDate(cutoffDate.getDate() - body.minDaysSinceContact);
 
-      filteredLeads = filteredLeads.filter((l) => {
-        const lastSent = lastSentMap.get(l.email);
-        if (!lastSent) return true;
-        return lastSent <= cutoffDate;
+        const sentEmails = await getSentEmails(apiKey, body.campaignId);
+        const lastSentMap = buildLastSentMap(sentEmails);
+
+        filteredLeads = filteredLeads.filter((l) => {
+          const lastSent = lastSentMap.get(l.email);
+          if (!lastSent) return true;
+          return lastSent <= cutoffDate;
+        });
+      }
+
+      if (body.excludeMissingVars) {
+        const steps = await getCampaignSequence(apiKey, body.campaignId);
+        const variables = extractVariables(steps);
+
+        if (variables.length > 0) {
+          filteredLeads = filteredLeads.filter(
+            (l) => validateLeadVariables(l, variables).length === 0
+          );
+        }
+      }
+
+      emailsToValidate = filteredLeads.map((l) => ({
+        leadEmail: l.email,
+        email: l.email,
+      }));
+    } catch (err) {
+      const message = err instanceof Error ? err.message : "Unknown error";
+      return new Response(JSON.stringify({ error: message }), {
+        status: 500,
+        headers: { "Content-Type": "application/json" },
       });
     }
-
-    if (body.excludeMissingVars) {
-      const steps = await getCampaignSequence(apiKey, body.campaignId);
-      const variables = extractVariables(steps);
-
-      if (variables.length > 0) {
-        filteredLeads = filteredLeads.filter(
-          (l) => validateLeadVariables(l, variables).length === 0
-        );
-      }
-    }
-
-    emailsToValidate = filteredLeads.map((l) => ({
-      leadEmail: l.email,
-      email: l.email,
-    }));
-  } catch (err) {
-    const message = err instanceof Error ? err.message : "Unknown error";
-    return new Response(JSON.stringify({ error: message }), {
-      status: 500,
-      headers: { "Content-Type": "application/json" },
-    });
   }
 
   // Stream validation results via SSE

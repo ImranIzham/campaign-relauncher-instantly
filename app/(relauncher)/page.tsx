@@ -301,6 +301,7 @@ export default function RelauncherPage() {
           clientId: selectedClientId,
           includeReplied,
           minDaysSinceContact,
+          leadEmails: leads.map((l) => l.email),
         }),
       });
       if (!res.ok) {
