@@ -139,9 +139,23 @@ export async function getCampaignLeads(
   apiKey: string,
   campaignId: string
 ): Promise<Lead[]> {
-  return fetchAllPaginated<Lead>(apiKey, "/leads/list", "POST", {
-    campaign_id: campaignId,
-  });
+  // /leads/list ignores campaign_id and returns all workspace leads.
+  // Instead: get leads that actually received emails in this campaign,
+  // then look up their full data from the workspace lead list.
+  const sentEmails = await fetchAllPaginated<Email>(
+    apiKey,
+    `/emails?campaign_id=${campaignId}&email_type=sent`
+  );
+
+  const campaignLeadEmails = new Set(
+    sentEmails.map((e) => e.lead_email).filter((e): e is string => !!e)
+  );
+
+  if (campaignLeadEmails.size === 0) return [];
+
+  // Fetch workspace leads and filter to only this campaign's leads
+  const allLeads = await fetchAllPaginated<Lead>(apiKey, "/leads/list", "POST", {});
+  return allLeads.filter((l) => campaignLeadEmails.has(l.email));
 }
 
 export async function getCampaignReplies(
