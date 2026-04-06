@@ -776,7 +776,7 @@ export default function RelauncherPage() {
           {/* Action Buttons */}
           {wizardStep === "preview" && (
             <div className="flex gap-3">
-              <button onClick={() => setWizardStep("configure")} className="px-4 py-3 bg-[#0A0A0A] border border-[#262626] text-[#B3B3B3] font-medium rounded-lg hover:bg-[#262626] transition text-sm">Back</button>
+              <button onClick={() => { setPreview(null); setLeads([]); setWizardStep("configure"); }} className="px-4 py-3 bg-[#0A0A0A] border border-[#262626] text-[#B3B3B3] font-medium rounded-lg hover:bg-[#262626] transition text-sm">Back</button>
               {validateEmails ? (
                 <button onClick={handleStreamValidation} className="flex-1 bg-[#02E481] text-[#071018] font-semibold rounded-lg py-3 hover:bg-[#00c96e] transition">Proceed to Validation</button>
               ) : relaunchCount === 0 ? (
