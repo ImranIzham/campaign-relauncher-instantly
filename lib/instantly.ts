@@ -150,7 +150,7 @@ export async function getCampaignReplies(
 ): Promise<Email[]> {
   return fetchAllPaginated<Email>(
     apiKey,
-    `/emails?campaign_id=${campaignId}&email_type=reply`
+    `/emails?campaign_id=${campaignId}&email_type=received`
   );
 }
 
