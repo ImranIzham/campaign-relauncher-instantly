@@ -185,7 +185,7 @@ export async function getSentEmails(
 ): Promise<Email[]> {
   return fetchAllPaginated<Email>(
     apiKey,
-    `/emails?campaign_id=${campaignId}`
+    `/emails?campaign_id=${campaignId}&email_type=sent`
   );
 }
 
@@ -232,6 +232,75 @@ export async function duplicateCampaign(
  * Add leads to a campaign. Instantly's /leads/add takes full lead objects
  * (not just IDs) and supports up to 1000 per batch.
  */
+// --- Campaign Creation ---
+
+export interface CampaignSchedule {
+  timezone?: string;
+  days?: Record<string, boolean>;
+  timing?: { from: string; to: string };
+}
+
+export interface CampaignSequenceStep {
+  subject: string;
+  email_body: string;
+  type?: string;
+  wait?: number;
+  variants?: Array<{ subject: string; email_body: string }>;
+}
+
+export interface CreateCampaignPayload {
+  name: string;
+  campaign_schedule?: CampaignSchedule;
+  sequences?: Array<{ steps: CampaignSequenceStep[] }>;
+  daily_limit?: number;
+  stop_on_reply?: boolean;
+  stop_on_auto_reply?: boolean;
+  link_tracking?: boolean;
+  open_tracking?: boolean;
+  email_list?: string[];
+}
+
+export async function createCampaign(
+  apiKey: string,
+  payload: CreateCampaignPayload
+): Promise<Campaign> {
+  const res = await instantlyFetch(apiKey, "/campaigns", {
+    method: "POST",
+    body: JSON.stringify(payload),
+  });
+  if (!res.ok) {
+    const text = await res.text();
+    throw new Error(`Failed to create campaign: ${res.status} — ${text}`);
+  }
+  return res.json();
+}
+
+export async function activateCampaign(
+  apiKey: string,
+  id: string
+): Promise<void> {
+  const res = await instantlyFetch(apiKey, `/campaigns/${id}/activate`, {
+    method: "POST",
+  });
+  if (!res.ok) {
+    const text = await res.text();
+    throw new Error(`Failed to activate campaign ${id}: ${res.status} — ${text}`);
+  }
+}
+
+export interface Account {
+  id: string;
+  email: string;
+  status: string;
+  [key: string]: unknown;
+}
+
+export async function listAccounts(
+  apiKey: string
+): Promise<Account[]> {
+  return fetchAllPaginated<Account>(apiKey, "/accounts");
+}
+
 export async function addLeadsToCampaign(
   apiKey: string,
   campaignId: string,

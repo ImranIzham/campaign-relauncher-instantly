@@ -8,7 +8,7 @@ import {
   buildLastSentMap,
 } from "@/lib/instantly";
 import { extractVariables, validateLeadVariables } from "@/lib/variables";
-import { startVerification, recheckVerification } from "@/lib/email-validator";
+import { verifyEmail } from "@/lib/email-validator";
 
 export const maxDuration = 300;
 
@@ -104,20 +104,19 @@ export async function POST(request: NextRequest) {
     async start(controller) {
       try {
         const BATCH_SIZE = 5;
-        const pendingEmails: { leadEmail: string; email: string }[] = [];
 
-        // Preflight: verify API key works
+        // Preflight: verify API key works with first email
         try {
-          const preflight = await startVerification(
-            emailsToValidate[0].email
-          );
+          const preflight = await verifyEmail(emailsToValidate[0].email);
           if (preflight.status === "unknown") {
-            const errorEvent = `data: ${JSON.stringify({
-              type: "error",
-              message:
-                "Instantly API key may be invalid — first email returned unknown.",
-            })}\n\n`;
-            controller.enqueue(encoder.encode(errorEvent));
+            controller.enqueue(
+              encoder.encode(
+                `data: ${JSON.stringify({
+                  type: "error",
+                  message: "BounceBan API key may be invalid — first email returned unknown.",
+                })}\n\n`
+              )
+            );
             for (const { leadEmail, email } of emailsToValidate) {
               controller.enqueue(
                 encoder.encode(
@@ -126,9 +125,6 @@ export async function POST(request: NextRequest) {
               );
             }
             return;
-          }
-          if (preflight.status === "pending") {
-            pendingEmails.push(emailsToValidate[0]);
           }
           controller.enqueue(
             encoder.encode(
@@ -143,7 +139,7 @@ export async function POST(request: NextRequest) {
           const msg = err instanceof Error ? err.message : "Unknown error";
           controller.enqueue(
             encoder.encode(
-              `data: ${JSON.stringify({ type: "error", message: `API key check failed: ${msg}` })}\n\n`
+              `data: ${JSON.stringify({ type: "error", message: `BounceBan API check failed: ${msg}` })}\n\n`
             )
           );
           for (const { leadEmail, email } of emailsToValidate) {
@@ -156,14 +152,14 @@ export async function POST(request: NextRequest) {
           return;
         }
 
-        // Pass 1: Fire remaining verification POSTs
+        // Single pass: verify remaining emails in batches
         const remaining = emailsToValidate.slice(1);
         for (let i = 0; i < remaining.length; i += BATCH_SIZE) {
           const batch = remaining.slice(i, i + BATCH_SIZE);
           const results = await Promise.all(
             batch.map(async ({ leadEmail, email }) => {
               try {
-                const result = await startVerification(email);
+                const result = await verifyEmail(email);
                 return { leadEmail, email, status: result.status };
               } catch {
                 return { leadEmail, email, status: "unknown" as const };
@@ -172,85 +168,8 @@ export async function POST(request: NextRequest) {
           );
 
           for (const result of results) {
-            if (result.status === "pending") {
-              pendingEmails.push({
-                leadEmail: result.leadEmail,
-                email: result.email,
-              });
-            }
             controller.enqueue(
               encoder.encode(`data: ${JSON.stringify(result)}\n\n`)
-            );
-          }
-        }
-
-        // Pass 2: Resolve pending emails
-        if (pendingEmails.length > 0) {
-          const RETRY_BATCH_SIZE = 10;
-          const MAX_ROUNDS = 8;
-          const INITIAL_WAIT_MS = 15000;
-          const RETRY_WAIT_MS = 8000;
-
-          let stillPending = [...pendingEmails];
-          await new Promise((r) => setTimeout(r, INITIAL_WAIT_MS));
-
-          for (
-            let round = 0;
-            round < MAX_ROUNDS && stillPending.length > 0;
-            round++
-          ) {
-            const nextPending: { leadEmail: string; email: string }[] = [];
-
-            for (let i = 0; i < stillPending.length; i += RETRY_BATCH_SIZE) {
-              const batch = stillPending.slice(i, i + RETRY_BATCH_SIZE);
-              const results = await Promise.all(
-                batch.map(async ({ leadEmail, email }) => {
-                  try {
-                    const result = await recheckVerification(email);
-                    return { leadEmail, email, status: result.status };
-                  } catch {
-                    return { leadEmail, email, status: "unknown" as const };
-                  }
-                })
-              );
-
-              for (const result of results) {
-                if (result.status === "pending") {
-                  nextPending.push({
-                    leadEmail: result.leadEmail,
-                    email: result.email,
-                  });
-                } else {
-                  controller.enqueue(
-                    encoder.encode(`data: ${JSON.stringify(result)}\n\n`)
-                  );
-                }
-              }
-            }
-
-            stillPending = nextPending;
-
-            if (stillPending.length > 0 && round < MAX_ROUNDS - 1) {
-              controller.enqueue(
-                encoder.encode(
-                  `data: ${JSON.stringify({
-                    type: "progress",
-                    round: round + 1,
-                    maxRounds: MAX_ROUNDS,
-                    stillPending: stillPending.length,
-                  })}\n\n`
-                )
-              );
-              await new Promise((r) => setTimeout(r, RETRY_WAIT_MS));
-            }
-          }
-
-          // Still pending after all rounds -> unknown
-          for (const { leadEmail, email } of stillPending) {
-            controller.enqueue(
-              encoder.encode(
-                `data: ${JSON.stringify({ leadEmail, email, status: "unknown" })}\n\n`
-              )
             );
           }
         }
