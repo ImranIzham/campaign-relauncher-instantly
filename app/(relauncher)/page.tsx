@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useMemo, useCallback, useEffect } from "react";
+import { useState, useMemo, useCallback, useEffect, useRef } from "react";
 import { useAuth } from "../(shared)/components/auth-gate";
 import { StatusBadge, Stat, Row, Spinner, StepIndicator } from "../(shared)/components/ui";
 
@@ -133,8 +133,13 @@ export default function RelauncherPage() {
 
   // Validation step
   const [validationProgress, setValidationProgress] = useState({ done: 0, total: 0 });
-  const [includeRisky, setIncludeRisky] = useState(true);
+  const [includeRisky, setIncludeRisky] = useState(false);
   const [includeCatchAll, setIncludeCatchAll] = useState(false);
+  const [includeUnknown, setIncludeUnknown] = useState(false);
+  const [isPaused, setIsPaused] = useState(false);
+  const isPausedRef = useRef(false);
+  const cancelledRef = useRef(false);
+  const readerRef = useRef<ReadableStreamDefaultReader<Uint8Array> | null>(null);
 
   // Relaunch step
   const [relaunchStepLabel, setRelaunchStepLabel] = useState("");
@@ -208,11 +213,11 @@ export default function RelauncherPage() {
       let count = validationSummary.valid;
       if (includeRisky) count += validationSummary.risky;
       if (includeCatchAll) count += validationSummary.catchAll;
-      count += validationSummary.unknown;
+      if (includeUnknown) count += validationSummary.unknown;
       return count;
     }
     return preview?.leadsToRelaunch ?? 0;
-  }, [wizardStep, validationSummary, includeRisky, includeCatchAll, preview]);
+  }, [wizardStep, validationSummary, includeRisky, includeCatchAll, includeUnknown, preview]);
 
   const excludeLeadEmails = useMemo(() => {
     if (wizardStep !== "validated") return [];
@@ -221,9 +226,10 @@ export default function RelauncherPage() {
       if (lead.emailStatus === "invalid") emails.push(lead.email);
       if (!includeRisky && lead.emailStatus === "risky") emails.push(lead.email);
       if (!includeCatchAll && lead.emailStatus === "catch-all") emails.push(lead.email);
+      if (!includeUnknown && lead.emailStatus === "unknown") emails.push(lead.email);
     }
     return emails;
-  }, [leads, wizardStep, includeRisky, includeCatchAll]);
+  }, [leads, wizardStep, includeRisky, includeCatchAll, includeUnknown]);
 
   const filteredLeads = useMemo(() => {
     if (tableFilter === "all") return leads;
@@ -287,6 +293,9 @@ export default function RelauncherPage() {
 
   const handleStreamValidation = useCallback(async () => {
     if (!preview) return;
+    isPausedRef.current = false;
+    cancelledRef.current = false;
+    setIsPaused(false);
     setWizardStep("validating");
     setLeadsTableExpanded(true);
     setLeads((prev) => prev.map((l) => ({ ...l, emailStatus: "pending" as const })));
@@ -310,11 +319,21 @@ export default function RelauncherPage() {
       }
 
       const reader = res.body!.getReader();
+      readerRef.current = reader;
       const decoder = new TextDecoder();
       let buffer = "";
       let completed = 0;
 
       while (true) {
+        // Pause: spin-wait without advancing the stream
+        while (isPausedRef.current && !cancelledRef.current) {
+          await new Promise((r) => setTimeout(r, 200));
+        }
+        // Cancel: abort reader and exit without setting validated step
+        if (cancelledRef.current) {
+          await reader.cancel().catch(() => {});
+          return;
+        }
         const { done, value } = await reader.read();
         if (done) break;
         buffer += decoder.decode(value, { stream: true });
@@ -343,12 +362,18 @@ export default function RelauncherPage() {
         }
       }
 
-      setWizardStep("validated");
-      setIncludeRisky(true);
-      setIncludeCatchAll(false);
+      if (!cancelledRef.current) {
+        setIsPaused(false);
+        setWizardStep("validated");
+        setIncludeRisky(false);
+        setIncludeCatchAll(false);
+        setIncludeUnknown(false);
+      }
     } catch (err) {
-      setError(err instanceof Error ? err.message : "Validation failed");
-      setWizardStep("error");
+      if (!cancelledRef.current) {
+        setError(err instanceof Error ? err.message : "Validation failed");
+        setWizardStep("error");
+      }
     }
   }, [preview, leads.length, pin, resolvedCampaignId, selectedClientId, includeReplied, minDaysSinceContact]);
 
@@ -685,6 +710,12 @@ export default function RelauncherPage() {
                     <span className="text-[#B3B3B3] text-sm">Include catch-all emails ({validationSummary.catchAll})</span>
                   </label>
                 )}
+                {validationSummary.unknown > 0 && (
+                  <label className="flex items-center gap-2 cursor-pointer">
+                    <input type="checkbox" checked={includeUnknown} onChange={(e) => setIncludeUnknown(e.target.checked)} className="w-4 h-4 rounded border-[#262626] bg-[#111111] accent-white" />
+                    <span className="text-[#B3B3B3] text-sm">Include unknown emails ({validationSummary.unknown})</span>
+                  </label>
+                )}
               </div>
             </div>
           )}
@@ -774,6 +805,33 @@ export default function RelauncherPage() {
           </div>
 
           {/* Action Buttons */}
+          {wizardStep === "validating" && (
+            <div className="flex gap-3">
+              <button
+                onClick={() => {
+                  cancelledRef.current = true;
+                  isPausedRef.current = false;
+                  setIsPaused(false);
+                  setPreview(null);
+                  setLeads([]);
+                  setWizardStep("configure");
+                }}
+                className="px-4 py-3 bg-[#0A0A0A] border border-[#262626] text-[#B3B3B3] font-medium rounded-lg hover:bg-[#262626] transition text-sm"
+              >
+                Back
+              </button>
+              <button
+                onClick={() => {
+                  isPausedRef.current = !isPausedRef.current;
+                  setIsPaused((p) => !p);
+                }}
+                className="flex-1 bg-[#0A0A0A] border border-[#262626] text-white font-semibold rounded-lg py-3 hover:bg-[#262626] transition"
+              >
+                {isPaused ? "Resume" : "Pause"}
+              </button>
+            </div>
+          )}
+
           {wizardStep === "preview" && (
             <div className="flex gap-3">
               <button onClick={() => { setPreview(null); setLeads([]); setWizardStep("configure"); }} className="px-4 py-3 bg-[#0A0A0A] border border-[#262626] text-[#B3B3B3] font-medium rounded-lg hover:bg-[#262626] transition text-sm">Back</button>
