@@ -49,7 +49,7 @@ export async function GET(request: NextRequest) {
     ]);
 
     // Build set of emails that replied (Instantly uses email addresses, not lead IDs)
-    const repliedEmails = new Set(replies.map((r) => r.lead_email));
+    const repliedEmails = new Set(replies.map((r) => r.lead));
 
     // Filter pipeline: reply filter -> date filter
     let filteredLeads = includeReplied

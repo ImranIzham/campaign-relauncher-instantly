@@ -95,9 +95,9 @@ export interface Lead {
 export interface Email {
   id: string;
   campaign_id: string;
-  lead_email: string;
+  lead: string;           // actual lead email address (Instantly v2 field name)
   email_type: string;
-  timestamp_sent?: string;
+  timestamp_email?: string;   // actual send timestamp (Instantly v2 field name)
   timestamp_created?: string;
   [key: string]: unknown;
 }
@@ -156,7 +156,7 @@ export async function getCampaignLeads(
   }
 
   const campaignLeadEmails = new Set(
-    sentEmails.map((e) => e.lead_email).filter((e): e is string => !!e)
+    sentEmails.map((e) => e.lead).filter((e): e is string => !!e)
   );
 
   if (campaignLeadEmails.size === 0) return [];
@@ -227,7 +227,7 @@ export async function getSentEmails(
 }
 
 /**
- * Build a map of lead_email → last sent date from sent emails.
+ * Build a map of lead email → last sent date from sent emails.
  * Instantly doesn't have lead IDs in the same way — we key by email address.
  */
 export function buildLastSentMap(
@@ -236,12 +236,12 @@ export function buildLastSentMap(
   const lastSentMap = new Map<string, Date>();
 
   for (const email of emails) {
-    const sentAt = email.timestamp_sent ?? email.timestamp_created;
-    if (sentAt && email.lead_email) {
+    const sentAt = email.timestamp_email ?? email.timestamp_created;
+    if (sentAt && email.lead) {
       const sentDate = new Date(sentAt);
-      const existing = lastSentMap.get(email.lead_email);
+      const existing = lastSentMap.get(email.lead);
       if (!existing || sentDate > existing) {
-        lastSentMap.set(email.lead_email, sentDate);
+        lastSentMap.set(email.lead, sentDate);
       }
     }
   }

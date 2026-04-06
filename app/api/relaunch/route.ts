@@ -59,7 +59,7 @@ export async function POST(request: NextRequest) {
     ]);
 
     // Filter pipeline: reply filter -> date filter -> variable filter -> exclude list
-    const repliedEmails = new Set(replies.map((r) => r.lead_email));
+    const repliedEmails = new Set(replies.map((r) => r.lead));
 
     let filteredLeads = body.includeReplied
       ? leads

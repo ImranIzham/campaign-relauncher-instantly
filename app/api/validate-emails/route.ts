@@ -46,7 +46,7 @@ export async function POST(request: NextRequest) {
       getCampaignReplies(apiKey, body.campaignId),
     ]);
 
-    const repliedEmails = new Set(replies.map((r) => r.lead_email));
+    const repliedEmails = new Set(replies.map((r) => r.lead));
 
     let filteredLeads = body.includeReplied
       ? leads
