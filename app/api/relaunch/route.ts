@@ -129,7 +129,7 @@ export async function POST(request: NextRequest) {
     }
 
     // Duplicate campaign
-    const newCampaign = await duplicateCampaign(apiKey, campaignId);
+    const newCampaign = await duplicateCampaign(apiKey, campaignId, campaign.name);
 
     // Attach filtered leads to new campaign (full lead objects)
     const { attached, failed } = await addLeadsToCampaign(

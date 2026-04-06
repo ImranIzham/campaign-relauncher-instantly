@@ -261,7 +261,8 @@ export function buildLastSentMap(
 
 export async function duplicateCampaign(
   apiKey: string,
-  id: string
+  id: string,
+  originalName: string
 ): Promise<{ id: string; name: string }> {
   const res = await instantlyFetch(apiKey, `/campaigns/${id}/duplicate`, {
     method: "POST",
@@ -273,7 +274,19 @@ export async function duplicateCampaign(
       `Failed to duplicate campaign ${id}: ${res.status} — ${text}`
     );
   }
-  return res.json();
+  const newCampaign: { id: string; name: string } = await res.json();
+
+  // Rename to "{original name} (relaunch)"
+  const desiredName = `${originalName} (relaunch)`;
+  const renameRes = await instantlyFetch(apiKey, `/campaigns/${newCampaign.id}`, {
+    method: "PATCH",
+    body: JSON.stringify({ name: desiredName }),
+  });
+  if (renameRes.ok) {
+    newCampaign.name = desiredName;
+  }
+
+  return newCampaign;
 }
 
 /**
