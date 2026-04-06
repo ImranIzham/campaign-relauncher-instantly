@@ -138,8 +138,14 @@ export async function getBlocklist(apiKey: string): Promise<Set<string>> {
   const key = `blocklist:${apiKey.slice(-8)}`;
   const cached = cacheGet<Set<string>>(key);
   if (cached) return cached;
-  const entries = await fetchAllPaginated<BlockEntry>(apiKey, "/block-list-entries");
-  // Build a set of blocked emails and domains (lowercase for case-insensitive matching)
+  // /block-list-entries does not accept query params — call it directly
+  const res = await instantlyFetch(apiKey, "/block-list-entries");
+  if (!res.ok) {
+    // If the endpoint isn't available, return an empty set rather than breaking the relaunch
+    return new Set();
+  }
+  const json = await res.json();
+  const entries: BlockEntry[] = json.items ?? json.data ?? json ?? [];
   const blocked = new Set(entries.map((e) => e.entry.toLowerCase()));
   cacheSet(key, blocked, TTL);
   return blocked;
