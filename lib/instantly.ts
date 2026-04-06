@@ -88,6 +88,7 @@ export interface Lead {
   first_name?: string;
   last_name?: string;
   company_name?: string;
+  campaign?: string;     // campaign ID this lead belongs to (Instantly v2 field)
   campaign_id?: string;
   [key: string]: unknown;
 }
@@ -142,25 +143,10 @@ export async function getCampaignLeads(
   apiKey: string,
   campaignId: string
 ): Promise<Lead[]> {
-  // /leads/list ignores campaign_id and returns all workspace leads.
-  // Instead: get leads that actually received emails in this campaign,
-  // then look up their full data from the workspace lead list.
-  const sentKey = `sent:${campaignId}:${apiKey.slice(-8)}`;
-  let sentEmails = cacheGet<Email[]>(sentKey);
-  if (!sentEmails) {
-    sentEmails = await fetchAllPaginated<Email>(
-      apiKey,
-      `/emails?campaign_id=${campaignId}&email_type=sent`
-    );
-    cacheSet(sentKey, sentEmails, TTL);
-  }
-
-  const campaignLeadEmails = new Set(
-    sentEmails.map((e) => e.lead).filter((e): e is string => !!e)
-  );
-
-  if (campaignLeadEmails.size === 0) return [];
-
+  // /leads/list POST with campaign_id in the body does not filter by campaign —
+  // it returns all workspace leads. However, each lead object has a 'campaign'
+  // field with the campaign ID it belongs to. Fetch all workspace leads (cached)
+  // and filter by that field.
   const leadsKey = `workspace-leads:${apiKey.slice(-8)}`;
   let allLeads = cacheGet<Lead[]>(leadsKey);
   if (!allLeads) {
@@ -168,7 +154,7 @@ export async function getCampaignLeads(
     cacheSet(leadsKey, allLeads, TTL);
   }
 
-  return allLeads.filter((l) => campaignLeadEmails.has(l.email));
+  return allLeads.filter((l) => l.campaign === campaignId);
 }
 
 export async function getCampaignReplies(
