@@ -119,12 +119,30 @@ export interface Subsequence {
   [key: string]: unknown;
 }
 
+export interface BlockEntry {
+  id: string;
+  entry: string;
+  type?: "email" | "domain";
+  [key: string]: unknown;
+}
+
 // --- Exported functions ---
 
 export async function listCampaigns(
   apiKey: string
 ): Promise<Campaign[]> {
   return fetchAllPaginated<Campaign>(apiKey, "/campaigns");
+}
+
+export async function getBlocklist(apiKey: string): Promise<Set<string>> {
+  const key = `blocklist:${apiKey.slice(-8)}`;
+  const cached = cacheGet<Set<string>>(key);
+  if (cached) return cached;
+  const entries = await fetchAllPaginated<BlockEntry>(apiKey, "/block-list-entries");
+  // Build a set of blocked emails and domains (lowercase for case-insensitive matching)
+  const blocked = new Set(entries.map((e) => e.entry.toLowerCase()));
+  cacheSet(key, blocked, TTL);
+  return blocked;
 }
 
 export async function getCampaign(
@@ -241,6 +259,7 @@ export async function duplicateCampaign(
 ): Promise<{ id: string; name: string }> {
   const res = await instantlyFetch(apiKey, `/campaigns/${id}/duplicate`, {
     method: "POST",
+    body: JSON.stringify({}),
   });
   if (!res.ok) {
     const text = await res.text();

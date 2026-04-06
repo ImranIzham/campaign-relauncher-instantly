@@ -8,6 +8,7 @@ import {
   buildLastSentMap,
   duplicateCampaign,
   addLeadsToCampaign,
+  getBlocklist,
 } from "@/lib/instantly";
 
 export const maxDuration = 60;
@@ -101,6 +102,18 @@ export async function POST(request: NextRequest) {
     if (body.excludeLeadEmails && body.excludeLeadEmails.length > 0) {
       const excludeSet = new Set(body.excludeLeadEmails);
       filteredLeads = filteredLeads.filter((l) => !excludeSet.has(l.email));
+    }
+
+    // Blocklist filter — exclude any email or domain on the workspace blocklist
+    const blocklist = await getBlocklist(apiKey);
+    if (blocklist.size > 0) {
+      filteredLeads = filteredLeads.filter((l) => {
+        const email = l.email.toLowerCase();
+        if (blocklist.has(email)) return false;
+        const domain = email.split("@")[1];
+        if (domain && blocklist.has(domain)) return false;
+        return true;
+      });
     }
 
     if (filteredLeads.length === 0) {

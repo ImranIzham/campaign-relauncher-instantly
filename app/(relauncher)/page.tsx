@@ -102,6 +102,8 @@ export default function RelauncherPage() {
   // Client selection
   const [clients, setClients] = useState<ClientOption[]>([]);
   const [selectedClientId, setSelectedClientId] = useState("");
+  const [clientSearch, setClientSearch] = useState("");
+  const [clientListOpen, setClientListOpen] = useState(false);
   const [showAddClient, setShowAddClient] = useState(false);
   const [newClientName, setNewClientName] = useState("");
   const [newClientApiKey, setNewClientApiKey] = useState("");
@@ -456,7 +458,7 @@ export default function RelauncherPage() {
     : 0;
 
   return (
-    <div className="bg-[#1C1E21] border border-[#262626] rounded-2xl p-8">
+    <div className="bg-[#1C1E21] border border-[#3d3d3d] rounded-2xl p-8 relative z-10">
       {/* Step Indicator */}
       {wizardStep !== "error" && (
         <StepIndicator labels={stepLabels} currentIndex={currentStepIndex} />
@@ -468,14 +470,54 @@ export default function RelauncherPage() {
           <div>
             <label className="text-[#B3B3B3] text-sm block mb-2">Select Client</label>
             {clients.length > 0 ? (
-              <select
-                value={selectedClientId}
-                onChange={(e) => { setSelectedClientId(e.target.value); setShowAddClient(false); setClientError(""); }}
-                className="w-full bg-[#0A0A0A] border border-[#262626] rounded-lg px-4 py-3 text-white focus:outline-none focus:border-[#02E481]"
-              >
-                <option value="">Choose a client...</option>
-                {clients.map((c) => <option key={c.id} value={c.id}>{c.name}</option>)}
-              </select>
+              <div className="relative">
+                <button
+                  type="button"
+                  onClick={() => { setClientListOpen((o) => !o); setClientSearch(""); }}
+                  className={`w-full flex items-center justify-between px-4 py-3 bg-[#111111] border rounded-lg text-sm transition ${selectedClientId ? "border-[#02E481]/60 text-white" : "border-[#3d3d3d] text-[#808080]"} hover:border-[#02E481]/60`}
+                >
+                  <span>{selectedClientId ? clients.find((c) => c.id === selectedClientId)?.name : "Choose a client..."}</span>
+                  <span className="text-[#808080] text-xs ml-2">{clientListOpen ? "▲" : "▼"}</span>
+                </button>
+                {clientListOpen && (
+                  <div className="absolute z-20 top-full left-0 right-0 mt-1 bg-[#111111] border border-[#3d3d3d] rounded-lg shadow-xl overflow-hidden">
+                    <div className="p-2 border-b border-[#3d3d3d]">
+                      <input
+                        type="text"
+                        placeholder="Search clients..."
+                        value={clientSearch}
+                        onChange={(e) => setClientSearch(e.target.value)}
+                        onClick={(e) => e.stopPropagation()}
+                        autoFocus
+                        className="w-full bg-[#0A0A0A] border border-[#3d3d3d] rounded px-3 py-1.5 text-white text-sm placeholder:text-[#808080] focus:outline-none focus:border-[#02E481]"
+                      />
+                    </div>
+                    <div className="max-h-[220px] overflow-y-auto divide-y divide-[#262626]/50">
+                      {clients
+                        .filter((c) => !clientSearch.trim() || c.name.toLowerCase().includes(clientSearch.toLowerCase()))
+                        .map((c) => (
+                          <button
+                            type="button"
+                            key={c.id}
+                            onClick={() => {
+                              setSelectedClientId(c.id);
+                              setShowAddClient(false);
+                              setClientError("");
+                              setClientListOpen(false);
+                              setClientSearch("");
+                            }}
+                            className={`w-full text-left px-4 py-2.5 text-sm transition hover:bg-[#262626]/60 ${selectedClientId === c.id ? "bg-[#02E481]/10 text-[#02E481]" : "text-white"}`}
+                          >
+                            {c.name}
+                          </button>
+                        ))}
+                      {clients.filter((c) => !clientSearch.trim() || c.name.toLowerCase().includes(clientSearch.toLowerCase())).length === 0 && (
+                        <p className="text-[#808080] text-sm text-center py-3">No clients match</p>
+                      )}
+                    </div>
+                  </div>
+                )}
+              </div>
             ) : (
               <p className="text-[#808080] text-sm">No clients saved yet. Add one below.</p>
             )}
@@ -487,16 +529,16 @@ export default function RelauncherPage() {
                 + Add New Client
               </button>
             ) : (
-              <div className="space-y-3 bg-[#0A0A0A]/30 border border-[#262626]/50 rounded-xl p-4">
+              <div className="space-y-3 bg-[#0A0A0A]/30 border border-[#3d3d3d]/50 rounded-xl p-4">
                 <p className="text-[#808080] text-xs uppercase tracking-wider font-medium">New Client</p>
                 <input type="text" placeholder="Client name" value={newClientName} onChange={(e) => setNewClientName(e.target.value)}
-                  className="w-full bg-[#0A0A0A] border border-[#262626] rounded-lg px-4 py-2.5 text-white text-sm placeholder:text-[#808080] focus:outline-none focus:border-[#02E481]" />
+                  className="w-full bg-[#0A0A0A] border border-[#3d3d3d] rounded-lg px-4 py-2.5 text-white text-sm placeholder:text-[#808080] focus:outline-none focus:border-[#02E481]" />
                 <input type="password" placeholder="Instantly API key" value={newClientApiKey} onChange={(e) => setNewClientApiKey(e.target.value)}
-                  className="w-full bg-[#0A0A0A] border border-[#262626] rounded-lg px-4 py-2.5 text-white text-sm placeholder:text-[#808080] focus:outline-none focus:border-[#02E481] font-mono" />
+                  className="w-full bg-[#0A0A0A] border border-[#3d3d3d] rounded-lg px-4 py-2.5 text-white text-sm placeholder:text-[#808080] focus:outline-none focus:border-[#02E481] font-mono" />
                 {clientError && <p className="text-red-400 text-sm">{clientError}</p>}
                 <div className="flex gap-2">
                   <button onClick={() => { setShowAddClient(false); setClientError(""); }}
-                    className="px-4 py-2 bg-[#0A0A0A] border border-[#262626] text-[#B3B3B3] text-sm rounded-lg hover:bg-[#262626] transition">Cancel</button>
+                    className="px-4 py-2 bg-[#0A0A0A] border border-[#3d3d3d] text-[#B3B3B3] text-sm rounded-lg hover:bg-[#262626] transition">Cancel</button>
                   <button onClick={handleAddClient} disabled={!newClientName.trim() || !newClientApiKey.trim() || clientLoading}
                     className="flex-1 bg-[#02E481] text-[#071018] text-sm font-semibold rounded-lg py-2 hover:bg-[#00c96e] transition disabled:opacity-30 disabled:cursor-not-allowed">
                     {clientLoading ? "Validating key..." : "Save Client"}
@@ -516,7 +558,7 @@ export default function RelauncherPage() {
       {/* ========== STEP 1: CONFIGURE ========== */}
       {wizardStep === "configure" && (
         <div className="space-y-4">
-          <div className="flex items-center justify-between bg-[#0A0A0A]/50 border border-[#262626]/50 rounded-lg px-4 py-2">
+          <div className="flex items-center justify-between bg-[#0A0A0A]/50 border border-[#3d3d3d]/50 rounded-lg px-4 py-2">
             <span className="text-[#B3B3B3] text-sm">Client: <span className="text-white font-medium">{selectedClientName}</span></span>
             <button onClick={() => setWizardStep("select-client")} className="text-[#808080] text-xs hover:text-[#02E481] transition">Change</button>
           </div>
@@ -524,8 +566,8 @@ export default function RelauncherPage() {
           <div>
             <label className="text-[#B3B3B3] text-sm block mb-2">Campaign</label>
             {campaignsLoading ? (
-              <div className="flex items-center gap-2 py-3 px-4 bg-[#111111] border border-[#262626] rounded-lg">
-                <div className="w-4 h-4 border-2 border-[#262626] border-t-[#02E481] rounded-full animate-spin" />
+              <div className="flex items-center gap-2 py-3 px-4 bg-[#111111] border border-[#3d3d3d] rounded-lg">
+                <div className="w-4 h-4 border-2 border-[#3d3d3d] border-t-[#02E481] rounded-full animate-spin" />
                 <span className="text-[#808080] text-sm">Loading campaigns...</span>
               </div>
             ) : campaigns.length > 0 ? (
@@ -534,7 +576,7 @@ export default function RelauncherPage() {
                 <button
                   type="button"
                   onClick={() => { setCampaignListOpen((o) => !o); setCampaignSearch(""); }}
-                  className={`w-full flex items-center justify-between px-4 py-2.5 bg-[#111111] border rounded-lg text-sm transition ${resolvedCampaignId ? "border-[#02E481]/40 text-white" : "border-[#262626] text-[#808080]"} hover:border-[#02E481]/60`}
+                  className={`w-full flex items-center justify-between px-4 py-2.5 bg-[#111111] border rounded-lg text-sm transition ${resolvedCampaignId ? "border-[#02E481]/60 text-white" : "border-[#3d3d3d] text-[#808080]"} hover:border-[#02E481]/60`}
                 >
                   <span>
                     {resolvedCampaignId
@@ -550,8 +592,8 @@ export default function RelauncherPage() {
                 </button>
                 {/* Dropdown list */}
                 {campaignListOpen && (
-                  <div className="absolute z-10 top-full left-0 right-0 mt-1 bg-[#111111] border border-[#262626] rounded-lg shadow-xl overflow-hidden">
-                    <div className="p-2 border-b border-[#262626]">
+                  <div className="absolute z-10 top-full left-0 right-0 mt-1 bg-[#111111] border border-[#3d3d3d] rounded-lg shadow-xl overflow-hidden">
+                    <div className="p-2 border-b border-[#3d3d3d]">
                       <input
                         type="text"
                         placeholder="Search..."
@@ -559,7 +601,7 @@ export default function RelauncherPage() {
                         onChange={(e) => setCampaignSearch(e.target.value)}
                         onClick={(e) => e.stopPropagation()}
                         autoFocus
-                        className="w-full bg-[#0A0A0A] border border-[#262626] rounded px-3 py-1.5 text-white text-sm placeholder:text-[#808080] focus:outline-none focus:border-[#02E481]"
+                        className="w-full bg-[#0A0A0A] border border-[#3d3d3d] rounded px-3 py-1.5 text-white text-sm placeholder:text-[#808080] focus:outline-none focus:border-[#02E481]"
                       />
                     </div>
                     <div className="max-h-[220px] overflow-y-auto divide-y divide-[#262626]/50">
@@ -583,15 +625,15 @@ export default function RelauncherPage() {
               </div>
             ) : (
               <input type="text" placeholder="Paste Instantly campaign URL or ID" value={campaignId} onChange={(e) => setCampaignId(e.target.value)}
-                className="w-full bg-[#111111] border border-[#262626] rounded-lg px-4 py-3 text-white placeholder:text-[#808080] focus:outline-none focus:border-[#02E481] font-mono text-sm" />
+                className="w-full bg-[#111111] border border-[#3d3d3d] rounded-lg px-4 py-3 text-white placeholder:text-[#808080] focus:outline-none focus:border-[#02E481] font-mono text-sm" />
             )}
           </div>
 
-          <div className="space-y-3 border border-[#262626] rounded-xl p-4">
+          <div className="space-y-3 border border-[#3d3d3d] rounded-xl p-4">
             <p className="text-[#808080] text-xs uppercase tracking-wider font-medium">Options</p>
             <label className="flex items-start gap-3 cursor-pointer">
               <input type="checkbox" checked={includeReplied} onChange={(e) => setIncludeReplied(e.target.checked)}
-                className="mt-0.5 w-4 h-4 rounded border-[#262626] bg-[#111111] text-white accent-white" />
+                className="mt-0.5 w-4 h-4 rounded border-[#3d3d3d] bg-[#111111] text-white accent-white" />
               <span className="text-[#B3B3B3] text-sm">
                 Include leads who replied
                 <span className="text-[#808080] block text-xs">For lead magnet campaigns</span>
@@ -600,20 +642,20 @@ export default function RelauncherPage() {
             <div className="space-y-2">
               <label className="text-[#B3B3B3] text-sm block">Last contacted</label>
               <select value={lastContactedOption} onChange={(e) => setLastContactedOption(Number(e.target.value))}
-                className="w-full bg-[#111111] border border-[#262626] rounded-lg px-3 py-2 text-white text-sm focus:outline-none focus:border-[#02E481]">
+                className="w-full bg-[#111111] border border-[#3d3d3d] rounded-lg px-3 py-2 text-white text-sm focus:outline-none focus:border-[#02E481]">
                 {LAST_CONTACTED_OPTIONS.map((opt) => <option key={opt.value} value={opt.value}>{opt.label}</option>)}
               </select>
               {lastContactedOption === -1 && (
                 <div className="flex items-center gap-2">
                   <input type="number" placeholder="Days" value={customDays} onChange={(e) => setCustomDays(e.target.value)}
-                    className="w-24 bg-[#111111] border border-[#262626] rounded-lg px-3 py-2 text-white text-sm placeholder:text-[#808080] focus:outline-none focus:border-[#02E481]" />
+                    className="w-24 bg-[#111111] border border-[#3d3d3d] rounded-lg px-3 py-2 text-white text-sm placeholder:text-[#808080] focus:outline-none focus:border-[#02E481]" />
                   <span className="text-[#B3B3B3] text-sm">+ days ago</span>
                 </div>
               )}
             </div>
             <label className="flex items-start gap-3 cursor-pointer">
               <input type="checkbox" checked={validateEmails} onChange={(e) => setValidateEmails(e.target.checked)}
-                className="mt-0.5 w-4 h-4 rounded border-[#262626] bg-[#111111] text-white accent-white" />
+                className="mt-0.5 w-4 h-4 rounded border-[#3d3d3d] bg-[#111111] text-white accent-white" />
               <span className="text-[#B3B3B3] text-sm">
                 Validate emails before relaunching
                 <span className="text-[#808080] block text-xs">Checks each email via BounceBan — removes invalid and catch-all addresses</span>
@@ -634,7 +676,7 @@ export default function RelauncherPage() {
       {/* ========== STEP 2: PREVIEW ========== */}
       {(wizardStep === "preview" || wizardStep === "validating" || wizardStep === "validated") && preview && (
         <div className="space-y-4">
-          <div className="bg-[#0A0A0A]/50 border border-[#262626]/50 rounded-xl p-5 space-y-4">
+          <div className="bg-[#0A0A0A]/50 border border-[#3d3d3d]/50 rounded-xl p-5 space-y-4">
             <div>
               <p className="text-white font-medium">{preview.campaign.name}</p>
               <p className="text-[#808080] text-sm">
@@ -679,7 +721,7 @@ export default function RelauncherPage() {
                 <span className="text-[#808080]">{validationProgress.total > 0 ? Math.round((validationProgress.done / validationProgress.total) * 100) : 0}%</span>
               </div>
               <div className="w-full bg-[#111111] rounded-full h-2">
-                <div className="bg-white h-2 rounded-full transition-all duration-300"
+                <div className="bg-[#02E481] h-2 rounded-full transition-all duration-300"
                   style={{ width: `${validationProgress.total > 0 ? (validationProgress.done / validationProgress.total) * 100 : 0}%` }} />
               </div>
             </div>
@@ -687,7 +729,7 @@ export default function RelauncherPage() {
 
           {/* Validation results */}
           {wizardStep === "validated" && validationSummary && (
-            <div className="bg-[#0A0A0A]/50 border border-[#262626]/50 rounded-xl p-4 space-y-3">
+            <div className="bg-[#0A0A0A]/50 border border-[#3d3d3d]/50 rounded-xl p-4 space-y-3">
               <p className="text-[#808080] text-xs uppercase tracking-wider font-medium">Validation Results</p>
               <div className="flex flex-wrap gap-3 text-sm">
                 <span className="text-green-400">Valid: {validationSummary.valid}</span>
@@ -700,19 +742,19 @@ export default function RelauncherPage() {
                 {validationSummary.invalid > 0 && <p className="text-red-400/70 text-xs">{validationSummary.invalid} invalid emails will be excluded</p>}
                 {validationSummary.risky > 0 && (
                   <label className="flex items-center gap-2 cursor-pointer">
-                    <input type="checkbox" checked={includeRisky} onChange={(e) => setIncludeRisky(e.target.checked)} className="w-4 h-4 rounded border-[#262626] bg-[#111111] accent-white" />
+                    <input type="checkbox" checked={includeRisky} onChange={(e) => setIncludeRisky(e.target.checked)} className="w-4 h-4 rounded border-[#3d3d3d] bg-[#111111] accent-white" />
                     <span className="text-[#B3B3B3] text-sm">Include risky emails ({validationSummary.risky})</span>
                   </label>
                 )}
                 {validationSummary.catchAll > 0 && (
                   <label className="flex items-center gap-2 cursor-pointer">
-                    <input type="checkbox" checked={includeCatchAll} onChange={(e) => setIncludeCatchAll(e.target.checked)} className="w-4 h-4 rounded border-[#262626] bg-[#111111] accent-white" />
+                    <input type="checkbox" checked={includeCatchAll} onChange={(e) => setIncludeCatchAll(e.target.checked)} className="w-4 h-4 rounded border-[#3d3d3d] bg-[#111111] accent-white" />
                     <span className="text-[#B3B3B3] text-sm">Include catch-all emails ({validationSummary.catchAll})</span>
                   </label>
                 )}
                 {validationSummary.unknown > 0 && (
                   <label className="flex items-center gap-2 cursor-pointer">
-                    <input type="checkbox" checked={includeUnknown} onChange={(e) => setIncludeUnknown(e.target.checked)} className="w-4 h-4 rounded border-[#262626] bg-[#111111] accent-white" />
+                    <input type="checkbox" checked={includeUnknown} onChange={(e) => setIncludeUnknown(e.target.checked)} className="w-4 h-4 rounded border-[#3d3d3d] bg-[#111111] accent-white" />
                     <span className="text-[#B3B3B3] text-sm">Include unknown emails ({validationSummary.unknown})</span>
                   </label>
                 )}
@@ -721,7 +763,7 @@ export default function RelauncherPage() {
           )}
 
           {/* Leads Table */}
-          <div className="border border-[#262626] rounded-xl overflow-hidden">
+          <div className="border border-[#3d3d3d] rounded-xl overflow-hidden">
             <button onClick={() => setLeadsTableExpanded(!leadsTableExpanded)}
               className="w-full flex items-center justify-between px-4 py-3 bg-[#111111]/30 hover:bg-[#111111]/50 transition">
               <span className="text-[#B3B3B3] text-sm">{leadsTableExpanded ? "Hide" : "View"} {leads.length} leads</span>
@@ -760,14 +802,14 @@ export default function RelauncherPage() {
                     }
                     return (
                       <table className="w-full text-sm">
-                        <thead className="sticky top-0 bg-[#1C1E21]">
+                        <thead className="sticky top-0 bg-[#111111] z-10 shadow-[0_1px_0_#3d3d3d]">
                           <tr className="text-[#808080] text-xs uppercase tracking-wider">
-                            <th className="text-left px-4 py-2 font-medium">Name</th>
-                            <th className="text-left px-4 py-2 font-medium">Email</th>
-                            <th className="text-left px-4 py-2 font-medium">Company</th>
-                            {allCustomKeys.map((v) => <th key={v} className="text-left px-4 py-2 font-medium font-mono">{`{{${v}}}`}</th>)}
-                            <th className="text-left px-4 py-2 font-medium">Vars</th>
-                            {(wizardStep === "validating" || wizardStep === "validated") && <th className="text-left px-4 py-2 font-medium">Email Status</th>}
+                            <th className="text-left px-4 py-2 font-medium whitespace-nowrap">Name</th>
+                            <th className="text-left px-4 py-2 font-medium whitespace-nowrap">Email</th>
+                            <th className="text-left px-4 py-2 font-medium whitespace-nowrap">Company</th>
+                            {allCustomKeys.map((v) => <th key={v} className="text-left px-4 py-2 font-medium whitespace-nowrap font-mono">{`{{${v}}}`}</th>)}
+                            <th className="text-left px-4 py-2 font-medium whitespace-nowrap">Vars</th>
+                            {(wizardStep === "validating" || wizardStep === "validated") && <th className="text-left px-4 py-2 font-medium whitespace-nowrap">Email Status</th>}
                           </tr>
                         </thead>
                         <tbody className="divide-y divide-[#262626]/50">
@@ -816,7 +858,7 @@ export default function RelauncherPage() {
                   setLeads([]);
                   setWizardStep("configure");
                 }}
-                className="px-4 py-3 bg-[#0A0A0A] border border-[#262626] text-[#B3B3B3] font-medium rounded-lg hover:bg-[#262626] transition text-sm"
+                className="px-4 py-3 bg-[#0A0A0A] border border-[#3d3d3d] text-[#B3B3B3] font-medium rounded-lg hover:bg-[#262626] transition text-sm"
               >
                 Back
               </button>
@@ -825,7 +867,7 @@ export default function RelauncherPage() {
                   isPausedRef.current = !isPausedRef.current;
                   setIsPaused((p) => !p);
                 }}
-                className="flex-1 bg-[#0A0A0A] border border-[#262626] text-white font-semibold rounded-lg py-3 hover:bg-[#262626] transition"
+                className="flex-1 bg-[#0A0A0A] border border-[#3d3d3d] text-white font-semibold rounded-lg py-3 hover:bg-[#262626] transition"
               >
                 {isPaused ? "Resume" : "Pause"}
               </button>
@@ -834,7 +876,7 @@ export default function RelauncherPage() {
 
           {wizardStep === "preview" && (
             <div className="flex gap-3">
-              <button onClick={() => { setPreview(null); setLeads([]); setWizardStep("configure"); }} className="px-4 py-3 bg-[#0A0A0A] border border-[#262626] text-[#B3B3B3] font-medium rounded-lg hover:bg-[#262626] transition text-sm">Back</button>
+              <button onClick={() => { setPreview(null); setLeads([]); setWizardStep("configure"); }} className="px-4 py-3 bg-[#0A0A0A] border border-[#3d3d3d] text-[#B3B3B3] font-medium rounded-lg hover:bg-[#262626] transition text-sm">Back</button>
               {validateEmails ? (
                 <button onClick={handleStreamValidation} className="flex-1 bg-[#02E481] text-[#071018] font-semibold rounded-lg py-3 hover:bg-[#00c96e] transition">Proceed to Validation</button>
               ) : relaunchCount === 0 ? (
@@ -849,7 +891,7 @@ export default function RelauncherPage() {
 
           {wizardStep === "validated" && (
             <div className="flex gap-3">
-              <button onClick={() => setWizardStep("preview")} className="px-4 py-3 bg-[#0A0A0A] border border-[#262626] text-[#B3B3B3] font-medium rounded-lg hover:bg-[#262626] transition text-sm">Back</button>
+              <button onClick={() => setWizardStep("preview")} className="px-4 py-3 bg-[#0A0A0A] border border-[#3d3d3d] text-[#B3B3B3] font-medium rounded-lg hover:bg-[#262626] transition text-sm">Back</button>
               {relaunchCount === 0 ? (
                 <p className="flex-1 text-green-400 text-sm text-center self-center">No leads to relaunch after validation.</p>
               ) : (
@@ -880,7 +922,7 @@ export default function RelauncherPage() {
           </div>
           <div className="flex gap-3">
             <button onClick={() => setWizardStep(validateEmails ? "validated" : "preview")}
-              className="px-4 py-3 bg-[#0A0A0A] border border-[#262626] text-[#B3B3B3] font-medium rounded-lg hover:bg-[#262626] transition text-sm">Back</button>
+              className="px-4 py-3 bg-[#0A0A0A] border border-[#3d3d3d] text-[#B3B3B3] font-medium rounded-lg hover:bg-[#262626] transition text-sm">Back</button>
             <button onClick={handleRelaunch} className="flex-1 bg-[#02E481] text-[#071018] font-semibold rounded-lg py-3 hover:bg-[#00c96e] transition">
               Confirm &amp; Relaunch
             </button>
@@ -894,7 +936,7 @@ export default function RelauncherPage() {
       {/* ========== DONE ========== */}
       {wizardStep === "done" && result && (
         <div className="space-y-4">
-          <div className="bg-[#0A0A0A]/50 border border-[#262626]/50 rounded-xl p-5 space-y-4">
+          <div className="bg-[#0A0A0A]/50 border border-[#3d3d3d]/50 rounded-xl p-5 space-y-4">
             <div className="flex items-center gap-2">
               <span className="text-green-400 text-lg">&#10003;</span>
               <p className="text-white font-medium">{result.message}</p>
@@ -914,7 +956,7 @@ export default function RelauncherPage() {
               </a>
             )}
           </div>
-          <button onClick={reset} className="w-full bg-[#0A0A0A] border border-[#262626] text-white font-medium rounded-lg py-3 hover:bg-[#262626] transition">
+          <button onClick={reset} className="w-full bg-[#0A0A0A] border border-[#3d3d3d] text-white font-medium rounded-lg py-3 hover:bg-[#262626] transition">
             Start Over
           </button>
         </div>
@@ -926,7 +968,7 @@ export default function RelauncherPage() {
           <div className="bg-red-500/10 border border-red-500/20 rounded-xl p-4">
             <p className="text-red-400 text-sm">{error}</p>
           </div>
-          <button onClick={reset} className="w-full bg-[#0A0A0A] border border-[#262626] text-white font-medium rounded-lg py-3 hover:bg-[#262626] transition">
+          <button onClick={reset} className="w-full bg-[#0A0A0A] border border-[#3d3d3d] text-white font-medium rounded-lg py-3 hover:bg-[#262626] transition">
             Start Over
           </button>
         </div>
