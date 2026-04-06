@@ -211,7 +211,7 @@ export default function RelauncherPage() {
   }, [leads]);
 
   const relaunchCount = useMemo(() => {
-    if (wizardStep === "validated" && validationSummary) {
+    if (validationSummary) {
       let count = validationSummary.valid;
       if (includeRisky) count += validationSummary.risky;
       if (includeCatchAll) count += validationSummary.catchAll;
@@ -219,10 +219,9 @@ export default function RelauncherPage() {
       return count;
     }
     return preview?.leadsToRelaunch ?? 0;
-  }, [wizardStep, validationSummary, includeRisky, includeCatchAll, includeUnknown, preview]);
+  }, [validationSummary, includeRisky, includeCatchAll, includeUnknown, preview]);
 
   const excludeLeadEmails = useMemo(() => {
-    if (wizardStep !== "validated") return [];
     const emails: string[] = [];
     for (const lead of leads) {
       if (lead.emailStatus === "invalid") emails.push(lead.email);
@@ -231,7 +230,7 @@ export default function RelauncherPage() {
       if (!includeUnknown && lead.emailStatus === "unknown") emails.push(lead.email);
     }
     return emails;
-  }, [leads, wizardStep, includeRisky, includeCatchAll, includeUnknown]);
+  }, [leads, includeRisky, includeCatchAll, includeUnknown]);
 
   const filteredLeads = useMemo(() => {
     if (tableFilter === "all") return leads;
