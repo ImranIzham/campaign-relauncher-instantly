@@ -8,7 +8,7 @@
  */
 
 import { google } from "googleapis";
-import { writeFileSync, mkdirSync, existsSync } from "fs";
+import { writeFileSync, mkdirSync, existsSync, readFileSync } from "fs";
 import { join } from "path";
 import { config } from "dotenv";
 
@@ -62,15 +62,30 @@ async function main() {
       mkdirSync(clientDir, { recursive: true });
     }
 
+    // Preserve locally-set fields that aren't sourced from the sheet — e.g.
+    // `active` and `reporting_day` (consumed by scripts/weekly-report-runner.sh).
+    // Otherwise each sync would wipe the weekly-report config.
+    const configPath = join(clientDir, "config.json");
+    let preserved: Record<string, unknown> = {};
+    if (existsSync(configPath)) {
+      try {
+        const existing = JSON.parse(readFileSync(configPath, "utf8"));
+        for (const k of ["active", "reporting_day"]) {
+          if (k in existing) preserved[k] = existing[k];
+        }
+      } catch { /* ignore parse errors — will overwrite */ }
+    }
+
     const config = {
       name,
       instantly_api_key: apiKey,
       sheets_row_id: String(i + 2), // row 2+ (1-indexed, skip header)
       created_at: createdAt || null,
       synced_at: new Date().toISOString(),
+      ...preserved,
     };
 
-    writeFileSync(join(clientDir, "config.json"), JSON.stringify(config, null, 2) + "\n");
+    writeFileSync(configPath, JSON.stringify(config, null, 2) + "\n");
 
     // Also write to api/{slug}.json for quick Claude Code lookup
     const apiEntry = {
